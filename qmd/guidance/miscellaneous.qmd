@@ -80,7 +80,7 @@ datatable(resources_data,
                 c('#d4edda', '#d1ecf1', '#fff3cd', '#f8d7da')
               )) %>%
   formatStyle('Popularity_Score',
-              background = styleColorBar(c(0, 100), '#667eea'),
+              background = styleColorBar(c(0, 100), '#4b7874'),
               backgroundSize = '95% 75%',
               backgroundRepeat = 'no-repeat',
               backgroundPosition = 'center') %>%

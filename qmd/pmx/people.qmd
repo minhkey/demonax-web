@@ -59,7 +59,7 @@ datatable(people_data,
                 c('#fff3cd', '#d1ecf1', '#d4edda')
               )) %>%
   formatStyle('Utilization',
-              background = styleColorBar(c(0, 100), '#667eea'),
+              background = styleColorBar(c(0, 100), '#4b7874'),
               backgroundSize = '95% 75%',
               backgroundRepeat = 'no-repeat',
               backgroundPosition = 'center')

@@ -1,6 +1,10 @@
 ---
-title: ""
-format: dashboard
+format:
+  dashboard:
+    theme: cosmo
+    css:
+      - ../assets/style/styles.css
+      - ../assets/style/dashboard-custom.css
 ---
 
 ```{r}
@@ -83,7 +87,9 @@ ggplot(sales_data, aes(x = month, y = sales)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     plot.title = element_text(face = "bold", size = 14),
-    panel.grid.minor = element_blank()
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#FFF2db", color = NA),
+    panel.background = element_rect(fill = "#FFF2db", color = NA)
   ) +
   labs(x = "Month")
 ```
@@ -98,7 +104,9 @@ ggplot(revenue_data, aes(x = day, y = revenue)) +
   theme_minimal() +
   theme(
     plot.title = element_text(face = "bold", size = 14),
-    panel.grid.minor = element_blank()
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#FFF2db", color = NA),
+    panel.background = element_rect(fill = "#FFF2db", color = NA)
   ) +
   labs(x = "Day", y = "Revenue ($)")
 ```
@@ -116,7 +124,10 @@ ggplot(scatter_data, aes(x = x, y = y, color = category)) +
   theme(
     plot.title = element_text(face = "bold", size = 14),
     legend.position = "bottom",
-    panel.grid.minor = element_blank()
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#FFF2db", color = NA),
+    panel.background = element_rect(fill = "#FFF2db", color = NA),
+    legend.background = element_rect(fill = "#FFF2db", color = NA)
   ) +
   labs(x = "Metric X", y = "Metric Y", color = "Category")
 ```

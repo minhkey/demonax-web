@@ -1,0 +1,111 @@
+/* Dashboard-specific styling to match site theme */
+
+/* Dashboard body */
+.dashboard {
+  background-color: #051122;
+  color: #d7d7d7;
+}
+
+/* Remove extra space/border when title is empty */
+.dashboard-title:empty,
+h1.title:empty,
+.quarto-title-banner:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  height: 0 !important;
+}
+
+/* Hide title block when empty to prevent extra borders */
+.quarto-title,
+.quarto-title-block,
+header#title-block-header {
+  display: none !important;
+  border-bottom: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove any top margin/padding from dashboard content */
+.dashboard-page {
+  padding-top: 0 !important;
+}
+
+/* Ensure navbar connects directly to content */
+body.dashboard {
+  padding-top: 0;
+}
+
+.dashboard > .page-rows-contents {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Value boxes - customize colors to match theme */
+.valuebox {
+  background-color: #FFF2db;
+  border: 2px solid #4b7874;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.valuebox-title {
+  color: #793d03;
+  font-weight: 600;
+}
+
+.valuebox-value {
+  color: #0D2E2B;
+  font-weight: 700;
+}
+
+.valuebox-icon {
+  color: #4b7874;
+  opacity: 0.7;
+}
+
+/* Card backgrounds in dashboard */
+.card {
+  background-color: #FFF2db;
+  border: 2px solid #4b7874;
+  border-radius: 0.5rem;
+}
+
+.card-header {
+  background-color: #0D2E2B;
+  color: #cfa600;
+  border-bottom: 2px solid #4b7874;
+  font-weight: 600;
+}
+
+.card-body {
+  background-color: #FFF2db;
+  color: #5A2800;
+}
+
+/* Chart containers */
+.chart-container {
+  background-color: #FFF2db;
+  padding: 1rem;
+  border-radius: 0.375rem;
+}
+
+/* Force all plot/chart areas to use beige background */
+.chart-figure,
+.plotly,
+img[src*="plot"],
+.plot-container {
+  background-color: #FFF2db !important;
+}
+
+/* Dashboard navigation/tabs if present */
+.dashboard .nav-tabs .nav-link {
+  color: #5A2800;
+}
+
+.dashboard .nav-tabs .nav-link.active {
+  background-color: #0D2E2B;
+  color: #cfa600;
+  border-color: #4b7874;
+}

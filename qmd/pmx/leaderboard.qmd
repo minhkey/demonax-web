@@ -67,7 +67,7 @@ datatable(leaderboard_data,
                 c('#ffd700', '#e8f4f8', 'white')
               )) %>%
   formatStyle('Overall_Rating',
-              background = styleColorBar(c(0, 100), '#667eea'),
+              background = styleColorBar(c(0, 100), '#4b7874'),
               backgroundSize = '95% 75%',
               backgroundRepeat = 'no-repeat',
               backgroundPosition = 'center') %>%

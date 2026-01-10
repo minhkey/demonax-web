@@ -39,7 +39,7 @@ leaflet() %>%
     lng = c(-118.2437, -71.0589, -80.1918),
     lat = c(34.0522, 42.3601, 25.7617),
     radius = 8,
-    color = "#667eea",
+    color = "#4b7874",
     fillColor = "#764ba2",
     fillOpacity = 0.7,
     popup = c("Los Angeles", "Boston", "Miami"),
