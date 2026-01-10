@@ -45,8 +45,7 @@ website:
         href: qmd/statistics.qmd
 
   page-footer:
-    left: |
-      This is the footer with a [helpful link](/qmd/help.html)
+    left: ""
     center: ""
     right: ""
 
@@ -55,4 +54,5 @@ format:
     theme: cosmo
     toc: false
     code-fold: false
+    echo: false
     css: [assets/style/styles.css, assets/style/index.css]

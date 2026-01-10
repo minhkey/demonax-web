@@ -2,6 +2,7 @@
 format:
   dashboard:
     theme: cosmo
+    echo: false
     css:
       - ../assets/style/styles.css
       - ../assets/style/dashboard-custom.css

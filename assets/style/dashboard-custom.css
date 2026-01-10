@@ -6,6 +6,24 @@
   color: #d7d7d7;
 }
 
+/* Ensure navbar has correct border on dashboard - match main navbar */
+.dashboard .navbar,
+body.dashboard .navbar {
+  background-color: #0D2E2B !important;
+  border-bottom: 2px solid #4b7874 !important;
+  border-top: none !important;
+}
+
+/* Remove any additional borders from dashboard header container */
+#quarto-header,
+#quarto-dashboard-header,
+.dashboard #quarto-header,
+.dashboard #quarto-dashboard-header {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
 /* Remove extra space/border when title is empty */
 .dashboard-title:empty,
 h1.title:empty,
@@ -40,6 +58,78 @@ body.dashboard {
 .dashboard > .page-rows-contents {
   margin-top: 0 !important;
   padding-top: 0 !important;
+}
+
+/* Remove border from main content area but NOT navbar */
+main.content,
+.page-layout-custom,
+#quarto-content {
+  border-top: none !important;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Remove all horizontal rules/borders at top of page */
+hr:first-of-type,
+.page-columns hr:first-child {
+  display: none !important;
+}
+
+/* Hide any title blocks or extra spacing elements */
+.quarto-title-block,
+.quarto-title-meta,
+#title-block-header,
+header[id="title-block-header"] {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* Fix background color between navbar and content */
+.dashboard .page-layout-custom,
+.dashboard main,
+.dashboard .page-rows-contents,
+.dashboard body,
+html,
+#quarto-dashboard-header,
+#quarto-header {
+  background-color: #051122 !important;
+}
+
+/* Ensure no light-colored blocks appear */
+.dashboard .bslib-page-dashboard,
+.dashboard .tab-content,
+.dashboard .page-fill,
+.bslib-grid,
+.bslib-gap-spacing {
+  background-color: #051122 !important;
+}
+
+/* Remove padding/margin that creates space between navbar and content */
+.dashboard .bslib-page-dashboard > .page-rows-contents:first-child,
+.dashboard main.page-rows-contents,
+.page-rows-contents {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  background-color: #051122 !important;
+}
+
+/* Target the container right after navbar - no borders or margins */
+.navbar + main,
+.navbar + .page-rows-contents,
+.navbar ~ main {
+  background-color: #051122 !important;
+  border-top: none !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Remove any separators or dividers after navbar */
+.navbar + hr,
+.navbar ~ hr:first-of-type {
+  display: none !important;
 }
 
 /* Value boxes - customize colors to match theme */

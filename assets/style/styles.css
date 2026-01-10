@@ -5,6 +5,23 @@ body {
   color: #d7d7d7;
 }
 
+/* Wider content for regular pages */
+.page-columns {
+  max-width: 1400px !important;
+}
+
+main.content {
+  max-width: 1400px !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#quarto-content {
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* Improve readability */
 p {
   line-height: 1.6;
@@ -13,6 +30,20 @@ p {
 /* Code blocks */
 pre {
   border-radius: 0.3rem;
+}
+
+/* Hide all R code blocks by default (keep output) */
+.cell-code,
+div.sourceCode,
+pre.sourceCode {
+  display: none !important;
+}
+
+/* Show code only if explicitly marked to show */
+.cell.code-visible .cell-code,
+.cell.code-visible div.sourceCode,
+.cell.code-visible pre.sourceCode {
+  display: block !important;
 }
 
 /* Tables */
@@ -30,20 +61,45 @@ table {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Callout left border colors matching theme */
 .callout-note {
-  border-left: 4px solid #4b7874;
+  border-left: 4px solid #28a745;
+}
+
+.callout.callout-style-default.callout-note {
+  border-left-color: #28a745;
 }
 
 .callout-warning {
   border-left: 4px solid #b89000;
 }
 
+.callout.callout-style-default.callout-warning {
+  border-left-color: #b89000;
+}
+
 .callout-important {
   border-left: 4px solid #793d03;
 }
 
+.callout.callout-style-default.callout-important {
+  border-left-color: #793d03;
+}
+
 .callout-tip {
-  border-left: 4px solid #0D2E2B;
+  border-left: 4px solid #cfa600;
+}
+
+.callout.callout-style-default.callout-tip {
+  border-left-color: #cfa600;
+}
+
+/* Callout header/title background - same as body */
+.callout-header,
+.callout-title-container,
+div.callout-title-container {
+  background-color: #FFF2db !important;
+  border-bottom: none !important;
 }
 
 /* Callout headers - dark brown for readability on beige background */
@@ -53,6 +109,7 @@ table {
   color: #5A2800 !important;
   font-weight: 600;
   font-size: 1.1rem;
+  background-color: transparent !important;
 }
 
 /* Callout body text */
@@ -62,9 +119,76 @@ table {
   line-height: 1.6;
 }
 
-/* Callout icons should match title color */
-.callout-icon {
+/* Callout icons - theme colors - very aggressive targeting */
+.callout-icon,
+.callout-icon::before,
+i.callout-icon,
+i.callout-icon::before {
   color: #5A2800 !important;
+}
+
+/* Note callout - bright green */
+.callout-note .callout-icon,
+.callout-note .callout-icon::before,
+.callout-note i.callout-icon,
+.callout-note i.callout-icon::before,
+.callout-note.callout-style-default .callout-icon,
+.callout-note.callout-style-default .callout-icon::before,
+.callout-note.callout-style-default i.callout-icon::before,
+.callout-note > .callout-header .callout-icon::before,
+div.callout-note .callout-icon::before,
+div.callout.callout-note .callout-icon::before,
+.callout-note .bi::before,
+.callout-note i.bi::before {
+  color: #28a745 !important;
+}
+
+/* Warning callout - brown-gold */
+.callout-warning .callout-icon,
+.callout-warning .callout-icon::before,
+.callout-warning i.callout-icon,
+.callout-warning i.callout-icon::before,
+.callout-warning.callout-style-default .callout-icon,
+.callout-warning.callout-style-default .callout-icon::before,
+.callout-warning.callout-style-default i.callout-icon::before,
+.callout-warning > .callout-header .callout-icon::before,
+div.callout-warning .callout-icon::before,
+div.callout.callout-warning .callout-icon::before,
+.callout-warning .bi::before,
+.callout-warning i.bi::before {
+  color: #b89000 !important;
+}
+
+/* Important callout - dark brown */
+.callout-important .callout-icon,
+.callout-important .callout-icon::before,
+.callout-important i.callout-icon,
+.callout-important i.callout-icon::before,
+.callout-important.callout-style-default .callout-icon,
+.callout-important.callout-style-default .callout-icon::before,
+.callout-important.callout-style-default i.callout-icon::before,
+.callout-important > .callout-header .callout-icon::before,
+div.callout-important .callout-icon::before,
+div.callout.callout-important .callout-icon::before,
+.callout-important .bi::before,
+.callout-important i.bi::before {
+  color: #793d03 !important;
+}
+
+/* Tip callout - gold */
+.callout-tip .callout-icon,
+.callout-tip .callout-icon::before,
+.callout-tip i.callout-icon,
+.callout-tip i.callout-icon::before,
+.callout-tip.callout-style-default .callout-icon,
+.callout-tip.callout-style-default .callout-icon::before,
+.callout-tip.callout-style-default i.callout-icon::before,
+.callout-tip > .callout-header .callout-icon::before,
+div.callout-tip .callout-icon::before,
+div.callout.callout-tip .callout-icon::before,
+.callout-tip .bi::before,
+.callout-tip i.bi::before {
+  color: #cfa600 !important;
 }
 
 /* Dropdown menus - slightly rounded corners */
@@ -102,21 +226,12 @@ table {
   color: #cfa600 !important;
 }
 
-/* Footer styling */
-.nav-footer {
-  background-color: #0D2E2B;
-  color: #d7d7d7;
-  border-top: 2px solid #4b7874 !important;
-}
-
-.nav-footer a {
-  color: #cfa600;
-  text-decoration: none;
-}
-
-.nav-footer a:hover {
-  color: #e6bd00;
-  text-decoration: underline;
+/* Footer styling - hidden but ensure background matches if it appears */
+.nav-footer,
+footer,
+.footer {
+  display: none !important;
+  background-color: #051122 !important;
 }
 
 /* DT Tables styling */
@@ -124,18 +239,53 @@ table {
   color: #5A2800;
 }
 
-/* DT filter and info text - bright gold */
+/* Round corners on DT tables */
+table.dataTable {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Round top corners on header */
+table.dataTable thead th:first-child {
+  border-top-left-radius: 0.5rem;
+}
+
+table.dataTable thead th:last-child {
+  border-top-right-radius: 0.5rem;
+}
+
+/* Round top corners on first data row */
+table.dataTable tbody tr:first-child td:first-child {
+  border-top-left-radius: 0.5rem;
+}
+
+table.dataTable tbody tr:first-child td:last-child {
+  border-top-right-radius: 0.5rem;
+}
+
+/* Round bottom corners on last row */
+table.dataTable tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 0.5rem;
+}
+
+table.dataTable tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 0.5rem;
+}
+
+/* DT filter and info text - pale gold */
 .dataTables_wrapper .dataTables_filter,
 .dataTables_wrapper .dataTables_filter label,
 .dataTables_wrapper .dataTables_info,
 .dataTables_wrapper .dataTables_length,
 .dataTables_wrapper .dataTables_length label {
-  color: #e6bd00 !important;
+  color: #b89000 !important;
   font-weight: 500;
 }
 
 table.dataTable thead {
-  background-color: #0D2E2B;
+  background-color: #051122;
   color: #cfa600;
 }
 
@@ -198,26 +348,26 @@ table.dataTable caption,
   color: white !important;
 }
 
-/* Current page number - bright gold */
+/* Current page number - pale gold */
 .dataTables_wrapper .dataTables_paginate .paginate_button.current,
 .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-  background-color: #e6bd00 !important;
+  background-color: #b89000 !important;
   border-color: #793d03 !important;
-  color: #5A2800 !important;
+  color: #FFF2db !important;
   font-weight: 700;
 }
 
-/* Previous and Next buttons - bright gold text */
+/* Previous and Next buttons - pale gold text */
 .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
 .dataTables_wrapper .dataTables_paginate .paginate_button.next {
-  color: #e6bd00 !important;
+  color: #b89000 !important;
   font-weight: 600;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
 .dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
-  background-color: #e6bd00 !important;
-  color: #5A2800 !important;
+  background-color: #b89000 !important;
+  color: #FFF2db !important;
 }
 
 /* DT selected rows - lighter than default */
