@@ -1,6 +1,8 @@
 /* Global Styles */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #051122;
+  color: #d7d7d7;
 }
 
 /* Improve readability */
@@ -27,16 +29,107 @@ table {
 /* Dropdown menus - slightly rounded corners */
 .navbar .dropdown-menu {
   border-radius: 0.375rem;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+  border: 1px solid #cfa600;
   padding: 0.25rem;
+  background-color: #FFF2db;
 }
 
 .navbar .dropdown-item {
   border-radius: 0.25rem;
   margin: 0.125rem 0;
+  color: #5A2800;
 }
 
 .navbar .dropdown-item:hover {
-  background-color: rgba(102, 126, 234, 0.1);
+  background-color: rgba(207, 166, 0, 0.15);
+  color: #793d03;
+}
+
+/* Navbar styling */
+.navbar {
+  background-color: #0D2E2B !important;
+  border-bottom: 2px solid #4b7874;
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: #d7d7d7 !important;
+}
+
+.navbar .nav-link:hover {
+  color: #cfa600 !important;
+}
+
+/* Footer styling */
+.nav-footer {
+  background-color: #0D2E2B;
+  color: #d7d7d7;
+  border-top: 2px solid #4b7874 !important;
+}
+
+.nav-footer a {
+  color: #cfa600;
+  text-decoration: none;
+}
+
+.nav-footer a:hover {
+  color: #e6bd00;
+  text-decoration: underline;
+}
+
+/* DT Tables styling */
+.dataTables_wrapper {
+  color: #5A2800;
+}
+
+table.dataTable thead {
+  background-color: #0D2E2B;
+  color: #cfa600;
+}
+
+table.dataTable thead th {
+  border-bottom: 2px solid #4b7874;
+  font-weight: 600;
+}
+
+table.dataTable tbody tr {
+  background-color: #FFF2db;
+}
+
+table.dataTable tbody tr:nth-child(even) {
+  background-color: #debb9d;
+}
+
+table.dataTable tbody tr:hover {
+  background-color: rgba(207, 166, 0, 0.15) !important;
+}
+
+table.dataTable tbody td {
+  border-bottom: 1px solid #c9a788;
+  color: #5A2800;
+}
+
+/* DT filter inputs */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  background-color: #FFF2db;
+  border: 1px solid #4b7874;
+  color: #5A2800;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* DT pagination */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  background-color: #debb9d;
+  border: 1px solid #793d03;
+  color: #5A2800 !important;
+  border-radius: 0.25rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background-color: #cfa600;
+  border-color: #793d03;
+  color: white !important;
 }

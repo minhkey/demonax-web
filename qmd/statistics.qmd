@@ -11,6 +11,11 @@ library(dplyr)
 # Set seed for reproducibility
 set.seed(42)
 
+# Define custom theme colors (fantasy/RPG palette)
+theme_colors <- c("#0D2E2B", "#cfa600", "#793d03", "#4b7874", "#debb9d")
+theme_colors_extended <- c("#0D2E2B", "#4b7874", "#6b9894", "#cfa600", "#e6bd00",
+                           "#b89000", "#793d03", "#5A2800", "#a35004", "#debb9d", "#c9a788")
+
 # Generate random data for visualizations
 months <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 sales_data <- data.frame(
@@ -67,9 +72,9 @@ Customer Score
 ```{r}
 #| title: "Monthly Sales Performance"
 ggplot(sales_data, aes(x = month, y = sales)) +
-  geom_col(fill = "#667eea", alpha = 0.8) +
-  geom_line(aes(y = profit * 4, group = 1), color = "#ff6b6b", size = 1.2) +
-  geom_point(aes(y = profit * 4), color = "#ff6b6b", size = 3) +
+  geom_col(fill = "#0D2E2B", alpha = 0.9) +
+  geom_line(aes(y = profit * 4, group = 1), color = "#cfa600", size = 1.2) +
+  geom_point(aes(y = profit * 4), color = "#cfa600", size = 3) +
   scale_y_continuous(
     name = "Sales ($)",
     sec.axis = sec_axis(~./4, name = "Profit ($)")
@@ -88,8 +93,8 @@ ggplot(sales_data, aes(x = month, y = sales)) +
 ```{r}
 #| title: "Revenue Trend (Last 30 Days)"
 ggplot(revenue_data, aes(x = day, y = revenue)) +
-  geom_line(color = "#764ba2", size = 1.2) +
-  geom_smooth(method = "loess", se = TRUE, color = "#667eea", fill = "#667eea", alpha = 0.2) +
+  geom_line(color = "#793d03", size = 1.2) +
+  geom_smooth(method = "loess", se = TRUE, color = "#4b7874", fill = "#4b7874", alpha = 0.3) +
   theme_minimal() +
   theme(
     plot.title = element_text(face = "bold", size = 14),
@@ -105,8 +110,8 @@ ggplot(revenue_data, aes(x = day, y = revenue)) +
 ```{r}
 #| title: "Category Distribution Analysis"
 ggplot(scatter_data, aes(x = x, y = y, color = category)) +
-  geom_point(size = 3, alpha = 0.7) +
-  scale_color_manual(values = c("A" = "#667eea", "B" = "#764ba2", "C" = "#ff6b6b")) +
+  geom_point(size = 3, alpha = 0.8) +
+  scale_color_manual(values = c("A" = "#0D2E2B", "B" = "#cfa600", "C" = "#793d03")) +
   theme_minimal() +
   theme(
     plot.title = element_text(face = "bold", size = 14),
