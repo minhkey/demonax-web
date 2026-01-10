@@ -1,0 +1,58 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "*.qmd"
+    - "qmd/**/*.qmd"
+    - "!DEV/"
+
+website:
+  title: "Data Analytics Platform"
+  favicon: ""
+  page-navigation: true
+
+  navbar:
+    background: light
+    logo: assets/img/logo.png
+    title: false
+    collapse-below: lg
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "About"
+        href: qmd/about.qmd
+      - text: "Help"
+        href: qmd/help.qmd
+      - text: "PMX"
+        menu:
+          - text: "People"
+            href: qmd/pmx/people.qmd
+          - text: "Usage"
+            href: qmd/pmx/usage.qmd
+          - text: "Leaderboard"
+            href: qmd/pmx/leaderboard.qmd
+      - text: "Guidance"
+        menu:
+          - text: "Software"
+            href: qmd/guidance/software.qmd
+          - text: "Servers"
+            href: qmd/guidance/servers.qmd
+          - text: "Map"
+            href: qmd/guidance/map.qmd
+          - text: "Miscellaneous"
+            href: qmd/guidance/miscellaneous.qmd
+      - text: "Statistics"
+        href: qmd/statistics.qmd
+
+  page-footer:
+    left: |
+      This is the footer with a [helpful link](qmd/help.qmd)
+    center: ""
+    right: ""
+
+format:
+  html:
+    theme: cosmo
+    toc: false
+    code-fold: false
+    css: [assets/style/styles.css, assets/style/index.css]

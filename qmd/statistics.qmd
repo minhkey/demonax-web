@@ -1,0 +1,137 @@
+---
+title: ""
+format: dashboard
+---
+
+```{r}
+#| include: false
+library(ggplot2)
+library(dplyr)
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Generate random data for visualizations
+months <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+sales_data <- data.frame(
+  month = factor(months, levels = months),
+  sales = c(3200, 3500, 4100, 3800, 4500, 5200, 4900, 5100, 5400, 5800, 6100, 6500),
+  profit = c(800, 950, 1100, 900, 1200, 1450, 1300, 1350, 1500, 1600, 1700, 1850)
+)
+
+# Generate scatter plot data
+scatter_data <- data.frame(
+  x = rnorm(100, mean = 50, sd = 15),
+  y = rnorm(100, mean = 50, sd = 15),
+  category = sample(c("A", "B", "C"), 100, replace = TRUE)
+)
+
+# Generate time series data
+days <- 1:30
+revenue_data <- data.frame(
+  day = days,
+  revenue = 5000 + cumsum(rnorm(30, mean = 100, sd = 300))
+)
+```
+
+## Row {height=20%}
+
+::: {.valuebox icon="graph-up-arrow" color="primary"}
+Total Revenue
+
+$1.2M
+:::
+
+::: {.valuebox icon="people" color="success"}
+Active Users
+
+8,432
+:::
+
+::: {.valuebox icon="speedometer2" color="warning"}
+Conversion Rate
+
+22.5%
+:::
+
+::: {.valuebox icon="trophy" color="info"}
+Customer Score
+
+4.8/5.0
+:::
+
+## Row {height=40%}
+
+### Column
+
+```{r}
+#| title: "Monthly Sales Performance"
+ggplot(sales_data, aes(x = month, y = sales)) +
+  geom_col(fill = "#667eea", alpha = 0.8) +
+  geom_line(aes(y = profit * 4, group = 1), color = "#ff6b6b", size = 1.2) +
+  geom_point(aes(y = profit * 4), color = "#ff6b6b", size = 3) +
+  scale_y_continuous(
+    name = "Sales ($)",
+    sec.axis = sec_axis(~./4, name = "Profit ($)")
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", size = 14),
+    panel.grid.minor = element_blank()
+  ) +
+  labs(x = "Month")
+```
+
+### Column
+
+```{r}
+#| title: "Revenue Trend (Last 30 Days)"
+ggplot(revenue_data, aes(x = day, y = revenue)) +
+  geom_line(color = "#764ba2", size = 1.2) +
+  geom_smooth(method = "loess", se = TRUE, color = "#667eea", fill = "#667eea", alpha = 0.2) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    panel.grid.minor = element_blank()
+  ) +
+  labs(x = "Day", y = "Revenue ($)")
+```
+
+## Row {height=40%}
+
+### Column {width=60%}
+
+```{r}
+#| title: "Category Distribution Analysis"
+ggplot(scatter_data, aes(x = x, y = y, color = category)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_manual(values = c("A" = "#667eea", "B" = "#764ba2", "C" = "#ff6b6b")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  ) +
+  labs(x = "Metric X", y = "Metric Y", color = "Category")
+```
+
+### Column {width=40%}
+
+```{r}
+#| title: "Top Performing Months"
+top_months <- sales_data %>%
+  arrange(desc(sales)) %>%
+  head(6)
+
+knitr::kable(
+  top_months,
+  col.names = c("Month", "Sales ($)", "Profit ($)"),
+  format.args = list(big.mark = ",")
+)
+```
+
+::: {.callout-note}
+## Data Note
+All data shown is randomly generated for demonstration purposes. Replace with your actual data sources when implementing in production.
+:::

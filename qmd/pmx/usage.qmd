@@ -1,0 +1,86 @@
+---
+title: "PMX - Usage"
+format: html
+---
+
+## Platform Usage Analytics
+
+Track and analyze platform usage patterns across different departments and user groups. This page provides insights into how teams are utilizing our PMX analytics tools, helping identify trends, peak usage times, and opportunities for optimization.
+
+Understanding usage patterns helps us better allocate resources and improve the overall user experience.
+
+## Usage Statistics by Department
+
+```{r}
+#| warning: false
+library(dplyr)
+library(DT)
+
+set.seed(456)
+
+# Create sample usage data
+usage_data <- data.frame(
+  Department = rep(c("Analytics", "Data Science", "Engineering", "Operations",
+                     "Finance", "Marketing", "Sales", "HR"), each = 3),
+  Month = rep(c("November", "December", "January"), 8),
+  Total_Sessions = c(
+    456, 523, 489,  # Analytics
+    389, 412, 445,  # Data Science
+    234, 267, 298,  # Engineering
+    178, 192, 201,  # Operations
+    145, 167, 189,  # Finance
+    234, 289, 312,  # Marketing
+    312, 345, 378,  # Sales
+    89, 98, 112     # HR
+  ),
+  Avg_Session_Duration = round(runif(24, 15, 45), 1),
+  Data_Processed_GB = round(runif(24, 10, 500), 1)
+) %>%
+  mutate(
+    Month_Num = case_when(
+      Month == "November" ~ 1,
+      Month == "December" ~ 2,
+      Month == "January" ~ 3
+    )
+  ) %>%
+  arrange(Month_Num, desc(Total_Sessions)) %>%
+  group_by(Department) %>%
+  mutate(
+    Growth_Rate = round((Total_Sessions / lag(Total_Sessions) - 1) * 100, 1),
+    Efficiency = round(Data_Processed_GB / Avg_Session_Duration, 2)
+  ) %>%
+  ungroup() %>%
+  select(-Month_Num)
+
+# Replace NA in first growth rate with 0
+usage_data$Growth_Rate[is.na(usage_data$Growth_Rate)] <- 0
+
+# Create interactive table
+datatable(usage_data,
+          options = list(
+            pageLength = 15,
+            searching = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+          ),
+          filter = 'top',
+          rownames = FALSE,
+          caption = "Department Usage Metrics (Last 3 Months)") %>%
+  formatRound(c('Avg_Session_Duration', 'Data_Processed_GB', 'Efficiency'), 1) %>%
+  formatStyle('Growth_Rate',
+              color = styleInterval(c(0), c('red', 'green')),
+              fontWeight = 'bold') %>%
+  formatStyle('Total_Sessions',
+              background = styleColorBar(range(usage_data$Total_Sessions), '#764ba2'),
+              backgroundSize = '90% 75%',
+              backgroundRepeat = 'no-repeat',
+              backgroundPosition = 'center')
+```
+
+## Key Insights
+
+- **Total Sessions**: 5,759 across all departments
+- **Most Active Department**: Analytics (1,468 sessions)
+- **Highest Growth**: Marketing department showing strong adoption
+- **Average Session Duration**: 28.6 minutes

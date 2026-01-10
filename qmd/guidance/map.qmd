@@ -1,0 +1,72 @@
+---
+title: "Interactive Map"
+format: html
+---
+
+## Geographic Data Visualization
+
+This interactive map provides a placeholder for geographic data visualization. The map is powered by Leaflet and can be enhanced with custom markers, layers, and data overlays.
+
+### Map Features
+
+- **Pan & Zoom**: Click and drag to pan, use scroll wheel to zoom
+- **Interactive**: Hover and click for additional information
+- **Multiple Layers**: Support for various map tile providers
+- **Custom Markers**: Add location markers with popups and tooltips
+
+```{r}
+#| label: leaflet-map
+#| fig-width: 10
+#| fig-height: 7
+
+library(leaflet)
+
+# Create an interactive map
+leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap tiles
+  setView(lng = -93.65, lat = 42.0285, zoom = 4) %>%
+
+  # Add some sample markers
+  addMarkers(
+    lng = c(-122.4194, -87.6298, -74.0060),
+    lat = c(37.7749, 41.8781, 40.7128),
+    popup = c("San Francisco", "Chicago", "New York"),
+    label = c("SF", "CHI", "NYC")
+  ) %>%
+
+  # Add circle markers for additional locations
+  addCircleMarkers(
+    lng = c(-118.2437, -71.0589, -80.1918),
+    lat = c(34.0522, 42.3601, 25.7617),
+    radius = 8,
+    color = "#667eea",
+    fillColor = "#764ba2",
+    fillOpacity = 0.7,
+    popup = c("Los Angeles", "Boston", "Miami"),
+    label = c("LA", "BOS", "MIA")
+  )
+```
+
+## Future Enhancements
+
+This map serves as a placeholder and foundation for more advanced geographic visualizations. Potential enhancements include:
+
+- Real-time data integration
+- Custom marker icons and clustering
+- Heat maps and choropleth layers
+- Geographic search functionality
+- Data filtering and layer controls
+- Export and sharing capabilities
+
+::: {.callout-tip}
+## Integration Ready
+This map component can be easily integrated with your data sources. Simply modify the R code above to pull coordinates and information from your database or API.
+:::
+
+## Map Controls
+
+The map includes standard Leaflet controls:
+
+- **Zoom Controls**: Located in the top-left corner
+- **Attribution**: Map data attribution in the bottom-right
+- **Full Screen**: Can be enhanced with additional controls as needed

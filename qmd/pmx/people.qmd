@@ -1,0 +1,73 @@
+---
+title: "PMX - People"
+format: html
+---
+
+## Team Directory
+
+This page provides an overview of our PMX (Performance Metrics Excellence) team members. Our diverse team brings together expertise in data science, analytics, and domain-specific knowledge to deliver exceptional insights and solutions.
+
+View the interactive directory below to explore team member information, roles, and key performance indicators.
+
+## Team Members
+
+```{r}
+#| warning: false
+library(dplyr)
+library(DT)
+
+set.seed(123)
+
+# Create sample people data
+people_data <- data.frame(
+  Name = c("Sarah Johnson", "Michael Chen", "Emily Rodriguez", "David Kim",
+           "Jessica Martinez", "Robert Taylor", "Amanda Wilson", "James Brown",
+           "Maria Garcia", "Christopher Lee", "Nicole Anderson", "Daniel White"),
+  Department = c("Analytics", "Data Science", "Analytics", "Engineering",
+                 "Data Science", "Analytics", "Engineering", "Data Science",
+                 "Analytics", "Engineering", "Data Science", "Analytics"),
+  Role = c("Senior Analyst", "Data Scientist", "Analyst", "Data Engineer",
+           "ML Engineer", "Team Lead", "Senior Engineer", "Data Scientist",
+           "Analyst", "Data Engineer", "Data Scientist", "Senior Analyst"),
+  Years_Experience = c(7, 5, 3, 6, 4, 10, 8, 5, 2, 7, 6, 9),
+  Projects_Completed = c(34, 28, 15, 42, 19, 67, 53, 31, 12, 45, 29, 58),
+  Active_Projects = c(3, 4, 2, 5, 3, 2, 4, 3, 3, 4, 4, 3)
+) %>%
+  mutate(
+    Avg_Projects_Per_Year = round(Projects_Completed / Years_Experience, 1),
+    Utilization = round((Active_Projects / 5) * 100, 0),
+    Status = ifelse(Active_Projects >= 4, "High Load",
+                    ifelse(Active_Projects >= 2, "Normal", "Available"))
+  ) %>%
+  arrange(Department, desc(Years_Experience))
+
+# Create interactive table
+datatable(people_data,
+          options = list(
+            pageLength = 12,
+            searching = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel', 'pdf')
+          ),
+          filter = 'top',
+          rownames = FALSE,
+          caption = "PMX Team Directory") %>%
+  formatStyle('Status',
+              backgroundColor = styleEqual(
+                c('High Load', 'Normal', 'Available'),
+                c('#fff3cd', '#d1ecf1', '#d4edda')
+              )) %>%
+  formatStyle('Utilization',
+              background = styleColorBar(c(0, 100), '#667eea'),
+              backgroundSize = '95% 75%',
+              backgroundRepeat = 'no-repeat',
+              backgroundPosition = 'center')
+```
+
+## Team Statistics
+
+- **Total Team Members**: 12
+- **Average Experience**: 6 years
+- **Total Projects Completed**: 433
+- **Current Active Projects**: 40

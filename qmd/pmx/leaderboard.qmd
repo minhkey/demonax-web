@@ -1,0 +1,88 @@
+---
+title: "PMX - Leaderboard"
+format: html
+---
+
+## Performance Leaderboard
+
+Recognize and celebrate top performers across various metrics. Our leaderboard showcases individuals and teams who demonstrate excellence in analytics, data quality, innovation, and collaboration.
+
+Rankings are updated monthly based on a comprehensive scoring system that evaluates multiple performance dimensions.
+
+## Top Performers
+
+```{r}
+#| warning: false
+library(dplyr)
+library(DT)
+
+set.seed(789)
+
+# Create sample leaderboard data
+leaderboard_data <- data.frame(
+  Rank = 1:20,
+  User = c("Sarah Johnson", "Michael Chen", "Amanda Wilson", "Daniel White",
+           "Emily Rodriguez", "Robert Taylor", "Jessica Martinez", "David Kim",
+           "James Brown", "Maria Garcia", "Christopher Lee", "Nicole Anderson",
+           "Alex Thompson", "Rachel Kim", "Steven Park", "Laura Martinez",
+           "Kevin Wong", "Diana Chen", "Brandon Lee", "Sophia Rodriguez"),
+  Department = sample(c("Analytics", "Data Science", "Engineering"), 20, replace = TRUE),
+  Total_Points = c(9850, 9420, 9180, 8965, 8734, 8590, 8412, 8289,
+                   8156, 7998, 7845, 7723, 7612, 7498, 7356, 7234,
+                   7145, 7012, 6898, 6756),
+  Projects_Completed = sample(15:45, 20, replace = TRUE),
+  Quality_Score = round(runif(20, 85, 99.5), 1),
+  Innovation_Score = sample(70:100, 20, replace = TRUE),
+  Collaboration_Score = sample(75:100, 20, replace = TRUE)
+) %>%
+  arrange(Rank) %>%
+  mutate(
+    Overall_Rating = round((Quality_Score + Innovation_Score + Collaboration_Score) / 3, 1),
+    Badge = case_when(
+      Rank <= 3 ~ "🥇 Elite",
+      Rank <= 10 ~ "⭐ Top Performer",
+      Rank <= 15 ~ "💎 High Achiever",
+      TRUE ~ "✨ Rising Star"
+    ),
+    Points_From_First = Total_Points - max(Total_Points)
+  )
+
+# Create interactive table
+datatable(leaderboard_data,
+          options = list(
+            pageLength = 20,
+            searching = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel'),
+            order = list(list(0, 'asc'))
+          ),
+          filter = 'top',
+          rownames = FALSE,
+          caption = "Monthly Performance Leaderboard") %>%
+  formatStyle('Rank',
+              target = 'row',
+              backgroundColor = styleInterval(
+                c(3, 10),
+                c('#ffd700', '#e8f4f8', 'white')
+              )) %>%
+  formatStyle('Overall_Rating',
+              background = styleColorBar(c(0, 100), '#667eea'),
+              backgroundSize = '95% 75%',
+              backgroundRepeat = 'no-repeat',
+              backgroundPosition = 'center') %>%
+  formatRound(c('Quality_Score', 'Overall_Rating'), 1) %>%
+  formatStyle('Badge',
+              fontWeight = 'bold')
+```
+
+## Leaderboard Categories
+
+The performance score is calculated based on:
+
+- **Projects Completed** (30%): Number and complexity of completed projects
+- **Quality Score** (30%): Code quality, documentation, and peer reviews
+- **Innovation Score** (20%): Novel approaches and creative solutions
+- **Collaboration Score** (20%): Teamwork, knowledge sharing, and mentoring
+
+Congratulations to all our top performers! 🎉

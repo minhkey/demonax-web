@@ -1,0 +1,236 @@
+/* Content Block */
+.content-block {
+  padding-top: 20px;
+  padding-bottom: 10px;
+  margin-left: 30px;
+  margin-right: 30px;
+}
+
+@media(min-width: 900px) {
+  .content-block {
+    margin-left: 50px;
+    margin-right: 50px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .content-block {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Hero Banner */
+.hero-banner {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  background-image:
+    linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%),
+    url('../img/hero.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 500px;
+}
+
+body.quarto-light .hero-banner {
+  background-image:
+    linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%),
+    url('../img/hero.jpg');
+}
+
+body.quarto-dark .hero-banner {
+  background-image:
+    linear-gradient(135deg, rgba(67, 67, 67, 0.85) 0%, rgba(0, 0, 0, 0.85) 100%),
+    url('../img/hero.jpg');
+}
+
+.hero-banner h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.hero-banner h3 {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.95);
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero-banner .content-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-banner .hero-text {
+  color: white;
+}
+
+.hero-banner ul {
+  padding-inline-start: 21px;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.8;
+}
+
+.hero-banner ul li {
+  padding-bottom: 0.6rem;
+}
+
+.hero-banner ul li strong {
+  color: white;
+  font-weight: 600;
+}
+
+.hero-banner a:not(.btn) {
+  color: white;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Buttons */
+.btn-action {
+  margin-bottom: 0;
+  font-size: 1.1rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.3rem;
+  transition: all 0.3s ease;
+}
+
+.btn-action-primary {
+  background-color: #ff6b6b;
+  border-color: #ff6b6b;
+  color: white;
+}
+
+.btn-action-primary:hover {
+  background-color: #ee5a52;
+  border-color: #ee5a52;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: white;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: white;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Alternative Background */
+body.quarto-light .alt-background {
+  background-color: rgb(247, 249, 251);
+  border-top: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+}
+
+body.quarto-dark .alt-background {
+  background-color: #17212B;
+  border-top: 1px solid #151515;
+  border-bottom: 1px solid #151515;
+}
+
+/* Features Section */
+.features-section {
+  padding: 3rem 0;
+}
+
+.features {
+  padding-bottom: 2em;
+}
+
+.feature {
+  margin-top: 20px;
+}
+
+@media (min-width: 800px) {
+  .features {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 0 0 0 -30px;
+    width: calc(100% + 30px);
+  }
+  .feature {
+    width: calc(25% - 30px);
+    margin: 20px 0 0 30px;
+  }
+}
+
+.feature h3 {
+  margin-top: 0;
+  font-size: 1.4rem;
+  color: #667eea;
+}
+
+body.quarto-dark .feature h3 {
+  color: #a5b4fc;
+}
+
+.feature p:first-of-type {
+  margin-bottom: 0.2rem;
+  line-height: 1.6;
+}
+
+body.quarto-light .feature p:first-of-type {
+  color: rgb(84, 85, 85);
+}
+
+body.quarto-dark .feature p:first-of-type {
+  color: rgb(200, 200, 200);
+}
+
+.learn-more {
+  margin-top: 0.5rem;
+}
+
+.learn-more a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+body.quarto-dark .learn-more a {
+  color: #a5b4fc;
+}
+
+.learn-more a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-banner {
+    min-height: 400px;
+  }
+
+  .hero-banner h1 {
+    font-size: 2rem;
+  }
+
+  .hero-banner h3 {
+    font-size: 1.2rem;
+  }
+
+  .hero-banner ul {
+    font-size: 1rem;
+  }
+}
+
+/* Remove default page navigation */
+nav.page-navigation {
+  display: none;
+}

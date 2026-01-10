@@ -1,0 +1,96 @@
+---
+title: "Guidance - Servers"
+format: html
+---
+
+## Server Infrastructure
+
+Access comprehensive information about our server infrastructure, including compute resources, storage systems, and deployment environments. This guide helps teams understand available resources and plan their workloads effectively.
+
+All production servers are monitored 24/7 with automated failover capabilities to ensure high availability and reliability.
+
+## Server Inventory
+
+```{r}
+#| warning: false
+library(dplyr)
+library(DT)
+
+# Create sample server data
+server_data <- data.frame(
+  Server_Name = c("PROD-APP-01", "PROD-APP-02", "PROD-DB-01", "PROD-DB-02",
+                  "DEV-APP-01", "DEV-DB-01", "TEST-APP-01", "TEST-DB-01",
+                  "ANALYTICS-01", "ANALYTICS-02", "ML-GPU-01", "ML-GPU-02",
+                  "WEB-01", "WEB-02", "CACHE-01", "STORAGE-01"),
+  Environment = c("Production", "Production", "Production", "Production",
+                  "Development", "Development", "Testing", "Testing",
+                  "Analytics", "Analytics", "ML/AI", "ML/AI",
+                  "Web", "Web", "Cache", "Storage"),
+  CPU_Cores = c(32, 32, 64, 64, 16, 32, 16, 32,
+                48, 48, 96, 96, 24, 24, 16, 8),
+  RAM_GB = c(128, 128, 512, 512, 64, 256, 64, 256,
+             256, 256, 512, 512, 128, 128, 64, 1024),
+  Storage_TB = c(2, 2, 10, 10, 1, 5, 1, 5,
+                 8, 8, 4, 4, 2, 2, 1, 50),
+  Uptime_Pct = c(99.99, 99.98, 99.99, 99.99, 98.5, 98.7, 97.8, 97.5,
+                 99.5, 99.4, 99.2, 99.3, 99.9, 99.8, 99.95, 99.99),
+  Current_Load_Pct = c(67, 72, 54, 48, 45, 38, 32, 28,
+                       78, 82, 91, 88, 56, 52, 68, 45),
+  Location = rep(c("US-East", "US-West", "EU-West", "Asia-Pacific"), each = 4)
+) %>%
+  mutate(
+    Status = case_when(
+      Current_Load_Pct > 80 ~ "High Load",
+      Current_Load_Pct > 60 ~ "Normal",
+      TRUE ~ "Low Load"
+    ),
+    Health = case_when(
+      Uptime_Pct >= 99.9 ~ "Excellent",
+      Uptime_Pct >= 99.0 ~ "Good",
+      TRUE ~ "Monitor"
+    ),
+    Total_Capacity_Score = round((CPU_Cores * 2 + RAM_GB + Storage_TB * 10) / 100, 1)
+  ) %>%
+  arrange(Environment, Server_Name)
+
+# Create interactive table
+datatable(server_data,
+          options = list(
+            pageLength = 16,
+            searching = TRUE,
+            ordering = TRUE,
+            dom = 'Bfrtip',
+            buttons = c('copy', 'csv', 'excel')
+          ),
+          filter = 'top',
+          rownames = FALSE,
+          caption = "Server Infrastructure Overview") %>%
+  formatStyle('Status',
+              backgroundColor = styleEqual(
+                c('High Load', 'Normal', 'Low Load'),
+                c('#fff3cd', '#d1ecf1', '#d4edda')
+              )) %>%
+  formatStyle('Health',
+              color = styleEqual(
+                c('Excellent', 'Good', 'Monitor'),
+                c('green', 'blue', 'orange')
+              ),
+              fontWeight = 'bold') %>%
+  formatStyle('Current_Load_Pct',
+              background = styleColorBar(c(0, 100), '#764ba2'),
+              backgroundSize = '95% 75%',
+              backgroundRepeat = 'no-repeat',
+              backgroundPosition = 'center') %>%
+  formatRound(c('Uptime_Pct', 'Total_Capacity_Score'), 2)
+```
+
+## Resource Requests
+
+To request additional server resources or report issues:
+
+1. Submit a ticket through the IT portal
+2. Include project requirements and timeline
+3. Specify estimated resource needs (CPU, RAM, Storage)
+4. Allow 3-5 business days for provisioning
+
+**Emergency contacts**: Available 24/7 for production issues

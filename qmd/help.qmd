@@ -1,0 +1,75 @@
+---
+title: "Help & Support"
+format: html
+---
+
+## Need Assistance?
+
+Our help center provides comprehensive support resources to help you get the most out of the platform. Whether you're a new user or an experienced analyst, you'll find documentation, tutorials, and troubleshooting guides tailored to your needs.
+
+For immediate assistance, please refer to our FAQ section below or contact our support team through the channels listed in the support resources table.
+
+## Support Resources
+
+Browse our available support resources and their current status:
+
+```{r}
+#| warning: false
+library(dplyr)
+library(DT)
+
+# Create sample support resources data
+support_data <- data.frame(
+  Resource_Type = c("Documentation", "Video Tutorials", "Live Chat", "Email Support",
+                    "Phone Support", "Community Forum", "API Reference", "Webinars",
+                    "Knowledge Base", "Status Page", "Training Sessions", "Release Notes"),
+  Availability = c("24/7", "24/7", "9AM-5PM EST", "24/7", "9AM-8PM EST",
+                   "24/7", "24/7", "Weekly", "24/7", "24/7", "Scheduled", "Monthly"),
+  Response_Time = c("Instant", "Instant", "< 5 min", "< 4 hours", "< 30 min",
+                    "Varies", "Instant", "N/A", "Instant", "Instant", "N/A", "N/A"),
+  Monthly_Usage = c(3421, 1876, 543, 234, 89, 2341, 876, 156, 2987, 1234, 67, 543),
+  Satisfaction = c(4.7, 4.8, 4.6, 4.5, 4.8, 4.3, 4.6, 4.9, 4.7, 4.4, 4.9, 4.5)
+) %>%
+  mutate(
+    Priority = case_when(
+      Monthly_Usage > 2000 ~ "High",
+      Monthly_Usage > 500 ~ "Medium",
+      TRUE ~ "Low"
+    ),
+    Satisfaction_Pct = round(Satisfaction * 20, 1)
+  ) %>%
+  arrange(desc(Monthly_Usage))
+
+# Create interactive table
+datatable(support_data,
+          options = list(
+            pageLength = 12,
+            searching = TRUE,
+            ordering = TRUE,
+            columnDefs = list(
+              list(targets = 3, render = JS(
+                "function(data, type, row, meta) {",
+                "return type === 'display' ? data.toLocaleString() : data;",
+                "}"
+              ))
+            )
+          ),
+          filter = 'top',
+          rownames = FALSE,
+          caption = "Support Resources Overview") %>%
+  formatStyle('Priority',
+              backgroundColor = styleEqual(
+                c('High', 'Medium', 'Low'),
+                c('#d4edda', '#fff3cd', '#f8d7da')
+              )) %>%
+  formatRound('Satisfaction', 1) %>%
+  formatPercentage('Satisfaction_Pct', 1)
+```
+
+## Contact Information
+
+- **Email**: support@analytics-platform.com
+- **Phone**: 1-800-DATA-HELP
+- **Live Chat**: Available during business hours (see table above)
+
+We're here to help you succeed!

@@ -1,0 +1,84 @@
+---
+pagetitle: "Data Analytics Platform"
+page-layout: custom
+section-divs: false
+toc: false
+editor: source
+description: |
+  A comprehensive data analytics and visualization platform with interactive dashboards and maps.
+---
+
+::: {.hero-banner}
+
+::: {.content-block .py-4}
+
+::: {.hero-text}
+# Data Analytics Platform {.mt-1}
+
+### Your comprehensive solution for data visualization and analysis
+
+- **Interactive Dashboards** - Explore key metrics and insights through dynamic visualizations
+- **Geospatial Analysis** - View and analyze location-based data with interactive maps
+- **Real-time Statistics** - Monitor trends and patterns with comprehensive statistical displays
+- **Flexible Reporting** - Generate custom reports and export data in multiple formats
+
+::: {.grid .gap-3 .pb-3 .pt-4}
+::: {.g-col-12 .g-col-sm-6}
+[Learn more](qmd/about.qmd){.btn-action-primary .btn-action .btn .btn-lg .w-100 role="button"}
+:::
+::: {.g-col-12 .g-col-sm-6 .mb-2}
+[Explore Map](qmd/guidance/map.qmd){.btn-action .btn-secondary .btn .btn-lg .w-100 role="button"}
+:::
+:::
+:::
+
+:::
+
+:::
+
+::: {.features-section .alt-background}
+::: {.content-block .py-4}
+
+::: {.features}
+
+::: {.feature}
+### Data Visualization
+Create stunning visualizations with our comprehensive charting library. Support for bar charts, line graphs, scatter plots, and more.
+
+::: {.learn-more}
+[Learn more »](qmd/statistics.qmd)
+:::
+:::
+
+::: {.feature}
+### Interactive Maps
+Explore geographical data with interactive Leaflet maps. Zoom, pan, and interact with location-based information.
+
+::: {.learn-more}
+[Learn more »](qmd/guidance/map.qmd)
+:::
+:::
+
+::: {.feature}
+### Performance Analytics
+Monitor key performance indicators with value boxes and metrics. Track trends and identify patterns in your data.
+
+::: {.learn-more}
+[Learn more »](qmd/statistics.qmd)
+:::
+:::
+
+::: {.feature}
+### Daily Cat
+![](assets/img/daily.gif){width=100%}
+:::
+
+:::
+:::
+:::
+
+::: {.content-block .py-5}
+
+Explore our platform by navigating through the comprehensive menu options above to discover all the tools and resources available to you. Start with the About page to understand our platform capabilities, or dive directly into the PMX section to view team performance metrics and leaderboards. The Guidance section provides essential information about approved software, server infrastructure, and helpful resources to streamline your workflow. Each page features interactive data tables that allow you to filter, sort, and export information as needed. Our Statistics dashboard offers real-time visualizations and insights, while the Map section enables geographic data exploration with intuitive controls.
+
+:::
