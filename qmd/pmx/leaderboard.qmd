@@ -13,37 +13,37 @@ Rankings are updated monthly based on a comprehensive scoring system that evalua
 
 ```{r}
 #| warning: false
+library(DBI)
+library(RSQLite)
 library(dplyr)
 library(DT)
 
-set.seed(789)
+# Connect to database
+con <- dbConnect(RSQLite::SQLite(), "../../assets/data/site_data.db")
 
-# Create sample leaderboard data
-leaderboard_data <- data.frame(
-  Rank = 1:20,
-  User = c("Sarah Johnson", "Michael Chen", "Amanda Wilson", "Daniel White",
-           "Emily Rodriguez", "Robert Taylor", "Jessica Martinez", "David Kim",
-           "James Brown", "Maria Garcia", "Christopher Lee", "Nicole Anderson",
-           "Alex Thompson", "Rachel Kim", "Steven Park", "Laura Martinez",
-           "Kevin Wong", "Diana Chen", "Brandon Lee", "Sophia Rodriguez"),
-  Department = sample(c("Analytics", "Data Science", "Engineering"), 20, replace = TRUE),
-  Total_Points = c(9850, 9420, 9180, 8965, 8734, 8590, 8412, 8289,
-                   8156, 7998, 7845, 7723, 7612, 7498, 7356, 7234,
-                   7145, 7012, 6898, 6756),
-  Projects_Completed = sample(15:45, 20, replace = TRUE),
-  Quality_Score = round(runif(20, 85, 99.5), 1),
-  Innovation_Score = sample(70:100, 20, replace = TRUE),
-  Collaboration_Score = sample(75:100, 20, replace = TRUE)
-) %>%
-  arrange(Rank) %>%
+# Query leaderboard data with employee names
+leaderboard_data <- dbGetQuery(con, "
+  SELECT
+    l.rank AS Rank,
+    e.name AS User,
+    e.department AS Department,
+    l.total_points AS Total_Points,
+    e.projects_completed AS Projects_Completed,
+    l.quality_score AS Quality_Score,
+    l.innovation_score AS Innovation_Score,
+    l.collaboration_score AS Collaboration_Score,
+    l.overall_rating AS Overall_Rating,
+    l.badge AS Badge
+  FROM leaderboard l
+  JOIN employees e ON l.employee_id = e.employee_id
+  ORDER BY l.rank
+")
+
+dbDisconnect(con)
+
+# Calculate points from first
+leaderboard_data <- leaderboard_data %>%
   mutate(
-    Overall_Rating = round((Quality_Score + Innovation_Score + Collaboration_Score) / 3, 1),
-    Badge = case_when(
-      Rank <= 3 ~ "🥇 Elite",
-      Rank <= 10 ~ "⭐ Top Performer",
-      Rank <= 15 ~ "💎 High Achiever",
-      TRUE ~ "✨ Rising Star"
-    ),
     Points_From_First = Total_Points - max(Total_Points)
   )
 

@@ -5,21 +5,18 @@ body {
   color: #d7d7d7;
 }
 
-/* Wider content for regular pages */
-.page-columns {
+/* Global width consistency - apply to ALL pages */
+.page-columns,
+main.content,
+#quarto-content,
+.quarto-layout-panel,
+.column-page,
+.column-page-left,
+.column-page-right {
   max-width: 1400px !important;
-}
-
-main.content {
-  max-width: 1400px !important;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-#quarto-content {
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 /* Improve readability */
@@ -237,6 +234,12 @@ footer,
 /* DT Tables styling */
 .dataTables_wrapper {
   color: #5A2800;
+  max-width: 100% !important;
+  overflow-x: auto;
+}
+
+table.dataTable {
+  max-width: 100% !important;
 }
 
 /* Round corners on DT tables */
@@ -253,15 +256,6 @@ table.dataTable thead th:first-child {
 }
 
 table.dataTable thead th:last-child {
-  border-top-right-radius: 0.5rem;
-}
-
-/* Round top corners on first data row */
-table.dataTable tbody tr:first-child td:first-child {
-  border-top-left-radius: 0.5rem;
-}
-
-table.dataTable tbody tr:first-child td:last-child {
   border-top-right-radius: 0.5rem;
 }
 
@@ -285,13 +279,13 @@ table.dataTable tbody tr:last-child td:last-child {
 }
 
 table.dataTable thead {
-  background-color: #051122;
-  color: #cfa600;
+  background-color: #FFF2db;
+  color: #5A2800;
 }
 
 table.dataTable thead th {
-  border-bottom: 2px solid #4b7874;
-  font-weight: 600;
+  border-bottom: 2px solid #c9a788;
+  font-weight: 700;
 }
 
 table.dataTable tbody tr {
@@ -409,4 +403,236 @@ table.dataTable.cell-border tbody tr:hover {
 /* Force DT rows with custom styling to also have light hover */
 table.dataTable tbody tr[style*="background"]:hover {
   background-color: rgba(255, 242, 219, 0.5) !important;
+}
+
+/* ============================================================================
+   EMPLOYEE PROFILE STYLES
+   ============================================================================ */
+
+/* Force employee profile pages to match other page widths */
+body:has(.employee-profile) .page-columns,
+body:has(.employee-profile) main.content,
+body:has(.employee-profile) #quarto-content {
+  max-width: 1400px !important;
+  width: 100%;
+}
+
+.employee-profile {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.profile-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 3rem;
+  background-color: #051122;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  border: none;
+  margin-bottom: 2rem;
+  align-items: start;
+}
+
+/* Ensure Progress section and tabs are full width */
+.employee-profile + h2,
+.employee-profile ~ .panel-tabset {
+  width: 100%;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.profile-photo {
+  margin: 0;
+  padding: 0;
+}
+
+.profile-photo img {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 0.5rem;
+  border: 3px solid #3a3738;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  display: block;
+  margin: 0;
+  vertical-align: top;
+  position: relative;
+  top: 3px;
+}
+
+.profile-info h2 {
+  margin-top: 0;
+  color: #cfa600;
+  font-size: 2rem;
+}
+
+.profile-info .role {
+  color: #793d03;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.profile-info {
+  margin: 0;
+  padding: 0;
+}
+
+.profile-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 3px solid #3a3738;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.profile-table th,
+.profile-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #c9a788;
+}
+
+.profile-table th {
+  background-color: #0D2E2B;
+  color: #cfa600;
+  font-weight: 600;
+  width: 200px;
+}
+
+.profile-table td {
+  background-color: #debb9d;
+  color: #5A2800;
+}
+
+.profile-table tr:last-child td,
+.profile-table tr:last-child th {
+  border-bottom: none;
+}
+
+.profile-table a {
+  color: #004294;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.profile-table a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive layout for profiles */
+@media (max-width: 768px) {
+  .profile-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .profile-photo img {
+    max-width: 200px;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .profile-table th {
+    width: 150px;
+  }
+}
+
+/* Constrain DT tables in employee profiles to prevent width variations */
+.employee-profile ~ .panel-tabset .dataTables_wrapper {
+  width: 100%;
+  max-width: 1400px;
+  overflow-x: auto;
+}
+
+.employee-profile ~ .panel-tabset table.dataTable {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+/* Ensure the tab content area doesn't cause layout shift */
+.employee-profile ~ .panel-tabset .tab-content {
+  width: 100%;
+}
+
+/* Style tab panels on employee profiles to match DT tables */
+.employee-profile ~ .panel-tabset {
+  margin-top: 2rem;
+}
+
+/* Style the tab buttons to match DT table headers */
+.employee-profile ~ .panel-tabset .nav-tabs {
+  border: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  overflow: hidden;
+}
+
+.employee-profile ~ .panel-tabset .nav-tabs .nav-link {
+  background-color: #051122;
+  color: #cfa600;
+  border: none;
+  border-right: 1px solid #4b7874;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  margin: 0;
+  border-radius: 0;
+}
+
+.employee-profile ~ .panel-tabset .nav-tabs .nav-link:last-child {
+  border-right: none;
+}
+
+.employee-profile ~ .panel-tabset .nav-tabs .nav-link:hover {
+  background-color: #0D2E2B;
+  color: #cfa600;
+}
+
+.employee-profile ~ .panel-tabset .nav-tabs .nav-link.active {
+  background-color: #FFF2db;
+  color: #5A2800;
+  font-weight: 700;
+}
+
+/* Round the first and last tab buttons */
+.employee-profile ~ .panel-tabset .nav-tabs .nav-link:first-child {
+  border-top-left-radius: 0.5rem;
+}
+
+.employee-profile ~ .panel-tabset .nav-tabs .nav-link:last-child {
+  border-top-right-radius: 0.5rem;
+}
+
+/* Style the tab content area */
+.employee-profile ~ .panel-tabset .tab-content {
+  background-color: #FFF2db;
+  padding: 1.5rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  border: none;
+}
+
+/* Force kable table to align with photo */
+.profile-info .kable_wrapper,
+.profile-info > table:first-of-type {
+  margin-top: 0 !important;
+}
+
+/* Remove any extra spacing from kableExtra */
+.profile-info .table {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Add spacing between search bar and table */
+.dataTables_wrapper .dataTables_filter {
+  margin-bottom: 1rem;
+}
+
+.dataTables_wrapper .dataTables_length {
+  margin-bottom: 1rem;
 }

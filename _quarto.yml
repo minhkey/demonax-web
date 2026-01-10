@@ -5,6 +5,7 @@ project:
     - "*.qmd"
     - "qmd/**/*.qmd"
     - "!DEV/"
+    - "!assets/template/"
 
 website:
   title: "Data Analytics Platform"

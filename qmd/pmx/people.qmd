@@ -13,33 +13,58 @@ View the interactive directory below to explore team member information, roles, 
 
 ```{r}
 #| warning: false
+library(DBI)
+library(RSQLite)
 library(dplyr)
 library(DT)
 
-set.seed(123)
+# Connect to database
+con <- dbConnect(RSQLite::SQLite(), "../../assets/data/site_data.db")
 
-# Create sample people data
-people_data <- data.frame(
-  Name = c("Sarah Johnson", "Michael Chen", "Emily Rodriguez", "David Kim",
-           "Jessica Martinez", "Robert Taylor", "Amanda Wilson", "James Brown",
-           "Maria Garcia", "Christopher Lee", "Nicole Anderson", "Daniel White"),
-  Department = c("Analytics", "Data Science", "Analytics", "Engineering",
-                 "Data Science", "Analytics", "Engineering", "Data Science",
-                 "Analytics", "Engineering", "Data Science", "Analytics"),
-  Role = c("Senior Analyst", "Data Scientist", "Analyst", "Data Engineer",
-           "ML Engineer", "Team Lead", "Senior Engineer", "Data Scientist",
-           "Analyst", "Data Engineer", "Data Scientist", "Senior Analyst"),
-  Years_Experience = c(7, 5, 3, 6, 4, 10, 8, 5, 2, 7, 6, 9),
-  Projects_Completed = c(34, 28, 15, 42, 19, 67, 53, 31, 12, 45, 29, 58),
-  Active_Projects = c(3, 4, 2, 5, 3, 2, 4, 3, 3, 4, 4, 3)
-) %>%
+# Query employee data
+people_data <- dbGetQuery(con, "
+  SELECT
+    employee_id,
+    name,
+    department,
+    role,
+    years_experience,
+    projects_completed,
+    active_projects,
+    utilization,
+    status
+  FROM employees
+  ORDER BY department, years_experience DESC
+")
+
+dbDisconnect(con)
+
+# Calculate additional metrics
+people_data <- people_data %>%
   mutate(
-    Avg_Projects_Per_Year = round(Projects_Completed / Years_Experience, 1),
-    Utilization = round((Active_Projects / 5) * 100, 0),
-    Status = ifelse(Active_Projects >= 4, "High Load",
-                    ifelse(Active_Projects >= 2, "Normal", "Available"))
+    Avg_Projects_Per_Year = round(projects_completed / years_experience, 1)
+  )
+
+# Create clickable name links pointing to employee profiles
+people_data <- people_data %>%
+  mutate(
+    Name = paste0(
+      '<a href="/qmd/employees/',
+      employee_id,
+      '.html" style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Department = department,
+    Role = role,
+    Years_Experience = years_experience,
+    Projects_Completed = projects_completed,
+    Active_Projects = active_projects,
+    Utilization = utilization,
+    Status = status
   ) %>%
-  arrange(Department, desc(Years_Experience))
+  select(Name, Department, Role, Years_Experience, Projects_Completed,
+         Active_Projects, Avg_Projects_Per_Year, Utilization, Status)
 
 # Create interactive table
 datatable(people_data,
@@ -52,6 +77,7 @@ datatable(people_data,
           ),
           filter = 'top',
           rownames = FALSE,
+          escape = FALSE,  # IMPORTANT: Allow HTML rendering for clickable links
           caption = "PMX Team Directory") %>%
   formatStyle('Status',
               backgroundColor = styleEqual(
