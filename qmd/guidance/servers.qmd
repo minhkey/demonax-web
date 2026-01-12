@@ -24,22 +24,47 @@ con <- dbConnect(RSQLite::SQLite(), "../../assets/data/site_data.db")
 # Query server data
 server_data <- dbGetQuery(con, "
   SELECT
-    server_name AS Server_Name,
-    environment AS Environment,
-    cpu_cores AS CPU_Cores,
-    ram_gb AS RAM_GB,
-    storage_tb AS Storage_TB,
-    uptime_pct AS Uptime_Pct,
-    current_load_pct AS Current_Load_Pct,
-    location AS Location,
-    status AS Status,
-    health AS Health,
-    total_capacity_score AS Total_Capacity_Score
+    server_name,
+    environment,
+    cpu_cores,
+    ram_gb,
+    storage_tb,
+    uptime_pct,
+    current_load_pct,
+    location,
+    status,
+    health,
+    total_capacity_score
   FROM servers
   ORDER BY environment, server_name
 ")
 
 dbDisconnect(con)
+
+# Create clickable server name links pointing to server profiles
+server_data <- server_data %>%
+  mutate(
+    Server_Name = paste0(
+      '<a href="/qmd/servers/',
+      tolower(gsub("-", "_", server_name)),
+      '.html" style="color: #004294; text-decoration: none; font-weight: 500;">',
+      server_name,
+      '</a>'
+    ),
+    Environment = environment,
+    CPU_Cores = cpu_cores,
+    RAM_GB = ram_gb,
+    Storage_TB = storage_tb,
+    Uptime_Pct = uptime_pct,
+    Current_Load_Pct = current_load_pct,
+    Location = location,
+    Status = status,
+    Health = health,
+    Total_Capacity_Score = total_capacity_score
+  ) %>%
+  select(Server_Name, Environment, CPU_Cores, RAM_GB, Storage_TB,
+         Uptime_Pct, Current_Load_Pct, Location, Status, Health,
+         Total_Capacity_Score)
 
 # Create interactive table
 datatable(server_data,
@@ -52,6 +77,7 @@ datatable(server_data,
           ),
           filter = 'top',
           rownames = FALSE,
+          escape = FALSE,  # IMPORTANT: Allow HTML rendering for clickable links
           caption = "Server Infrastructure Overview") %>%
   formatStyle('Status',
               backgroundColor = styleEqual(

@@ -1,0 +1,84 @@
+---
+title: "DEV-APP-01"
+format: html
+---
+
+<div style="margin-bottom: 1.5rem;">
+  <a href="/qmd/guidance/servers.html" style="color: #cfa600; text-decoration: none; font-weight: 500; font-size: 1rem;">
+    ← Back to Servers
+  </a>
+</div>
+
+```{r}
+#| echo: false
+#| warning: false
+library(DBI)
+library(RSQLite)
+library(knitr)
+library(kableExtra)
+
+# Fetch server data from database
+con <- dbConnect(RSQLite::SQLite(), "../../assets/data/site_data.db")
+server <- dbGetQuery(con, "
+  SELECT * FROM servers
+  WHERE server_name = 'DEV-APP-01'
+")
+dbDisconnect(con)
+```
+
+::: {.server-profile}
+::: {.profile-container}
+::: {.profile-photo}
+![](../../assets/img/hardware/dev_app_01.jpg)
+:::
+
+::: {.profile-info}
+## Description
+
+Development application server hosting our pre-production application environments. Provides isolated testing environments for feature development and integration testing. Supports continuous integration pipelines with automated deployment capabilities. Enables developers to test new code changes before production release. Configured to mirror production settings while maintaining separation of development and live data.
+:::
+:::
+:::
+
+## Server Specifications
+
+```{r}
+#| echo: false
+#| warning: false
+library(DBI)
+library(RSQLite)
+library(DT)
+
+# Create the specs data for the table
+specs_data <- data.frame(
+  Specification = c("Server Name", "Environment", "CPU Cores", "RAM (GB)",
+                    "Storage (TB)", "Uptime (%)", "Current Load (%)",
+                    "Location", "Status", "Health", "Total Capacity Score"),
+  Value = c(
+    server$server_name,
+    server$environment,
+    as.character(server$cpu_cores),
+    as.character(server$ram_gb),
+    as.character(server$storage_tb),
+    paste0(round(server$uptime_pct, 2), "%"),
+    paste0(server$current_load_pct, "%"),
+    server$location,
+    server$status,
+    server$health,
+    as.character(round(server$total_capacity_score, 2))
+  )
+)
+
+datatable(specs_data,
+          options = list(
+            pageLength = 15,
+            searching = FALSE,
+            ordering = FALSE,
+            dom = 't',
+            columnDefs = list(list(width = '40%', targets = 0),
+                             list(width = '60%', targets = 1))
+          ),
+          colnames = c("", ""),
+          rownames = FALSE,
+          class = 'cell-border stripe')
+```

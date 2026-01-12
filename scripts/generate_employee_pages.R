@@ -6,7 +6,8 @@ library(DBI)
 library(RSQLite)
 library(glue)
 
-cat("Generating employee profile pages...\n\n")
+timestamp <- format(Sys.time(), "[%Y-%m-%d %H:%M:%S]")
+cat(timestamp, "Generating employee profile pages\n")
 
 # Read template
 template <- readLines("assets/template/employee_profile.qmd")
@@ -17,7 +18,7 @@ con <- dbConnect(RSQLite::SQLite(), "assets/data/site_data.db")
 employees <- dbGetQuery(con, "SELECT * FROM employees ORDER BY employee_id")
 dbDisconnect(con)
 
-cat("Found", nrow(employees), "employees in database\n")
+cat(timestamp, "Found", nrow(employees), "employees in database\n")
 
 # Create directory
 dir.create("qmd/employees", showWarnings = FALSE, recursive = TRUE)
@@ -47,8 +48,8 @@ for (i in 1:nrow(employees)) {
   output_file <- paste0("qmd/employees/", emp$employee_id, ".qmd")
   writeLines(profile_content, output_file)
 
-  cat("  ✓ Generated:", emp$name, "(", emp$employee_id, ")\n")
+  cat(timestamp, "Generated profile:", emp$name, "(", emp$employee_id, ")\n")
 }
 
-cat("\n✅ Successfully generated", nrow(employees), "employee profile pages!\n")
-cat("📁 Profile pages saved to: qmd/employees/\n")
+cat(timestamp, "Successfully generated", nrow(employees), "employee profile pages\n")
+cat(timestamp, "Profile pages saved to: qmd/employees/\n")
