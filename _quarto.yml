@@ -6,6 +6,9 @@ project:
     - "qmd/**/*.qmd"
     - "!DEV/"
     - "!assets/template/"
+  resources:
+    - "assets/img/hero/"
+    - "assets/js/"
 
 website:
   title: "Data Analytics Platform"

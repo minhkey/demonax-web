@@ -6,9 +6,26 @@ toc: false
 editor: source
 description: |
   A comprehensive data analytics and visualization platform with interactive dashboards and maps.
+include-after-body:
+  - assets/js/hero-carousel.html
 ---
 
 ::: {.hero-banner}
+
+<!-- Carousel navigation arrows -->
+<button class="hero-carousel-arrow hero-carousel-arrow-left" aria-label="Previous image">
+  <i class="bi bi-chevron-left"></i>
+</button>
+<button class="hero-carousel-arrow hero-carousel-arrow-right" aria-label="Next image">
+  <i class="bi bi-chevron-right"></i>
+</button>
+
+<!-- Carousel indicators -->
+<div class="hero-carousel-indicators">
+  <button class="hero-carousel-indicator active" aria-label="Go to image 1"></button>
+  <button class="hero-carousel-indicator" aria-label="Go to image 2"></button>
+  <button class="hero-carousel-indicator" aria-label="Go to image 3"></button>
+</div>
 
 ::: {.content-block .py-4}
 
@@ -27,7 +44,7 @@ description: |
 [Learn more](qmd/about.qmd){.btn-action-primary .btn-action .btn .btn-lg .w-100 role="button"}
 :::
 ::: {.g-col-12 .g-col-sm-6 .mb-2}
-[Explore Map](qmd/guidance/map.qmd){.btn-action .btn-secondary .btn .btn-lg .w-100 role="button"}
+[Explore map](qmd/guidance/map.qmd){.btn-action .btn-secondary .btn .btn-lg .w-100 role="button"}
 :::
 :::
 :::

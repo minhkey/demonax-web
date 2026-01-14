@@ -31,26 +31,35 @@
   position: relative;
   display: flex;
   justify-content: center;
-  background-image:
-    linear-gradient(135deg, rgba(13, 46, 43, 0.85) 0%, rgba(5, 17, 34, 0.90) 100%),
-    url('../img/hero.jpg');
+  /* background-image will be set by JavaScript */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   min-height: 500px;
   border-bottom: 3px solid #4b7874;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
 }
 
-body.quarto-light .hero-banner {
-  background-image:
-    linear-gradient(135deg, rgba(13, 46, 43, 0.85) 0%, rgba(5, 17, 34, 0.90) 100%),
-    url('../img/hero.jpg');
+/* Background image layer for smooth transitions */
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+  z-index: 0;
 }
 
-body.quarto-dark .hero-banner {
-  background-image:
-    linear-gradient(135deg, rgba(13, 46, 43, 0.90) 0%, rgba(5, 17, 34, 0.95) 100%),
-    url('../img/hero.jpg');
+.hero-banner.transitioning::before {
+  opacity: 1;
 }
 
 .hero-banner h1 {
@@ -74,6 +83,8 @@ body.quarto-dark .hero-banner {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-banner .hero-text {
@@ -102,46 +113,113 @@ body.quarto-dark .hero-banner {
   text-underline-offset: 3px;
 }
 
+/* Hero Carousel Controls */
+.hero-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  border: none;
+  padding: 0.75rem;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+  border-radius: 0.25rem;
+  opacity: 0.7;
+}
+
+.hero-carousel-arrow:hover {
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.95);
+  opacity: 1;
+}
+
+.hero-carousel-arrow-left {
+  left: 20px;
+}
+
+.hero-carousel-arrow-right {
+  right: 20px;
+}
+
+.hero-carousel-indicators {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+}
+
+.hero-carousel-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  opacity: 0.6;
+}
+
+.hero-carousel-indicator:hover {
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.hero-carousel-indicator.active {
+  background: rgba(255, 255, 255, 0.7);
+  transform: scale(1.15);
+  opacity: 1;
+}
+
 /* Buttons */
 .btn-action {
   margin-bottom: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
   padding: 0.6rem 1.2rem;
   border-radius: 0.3rem;
   transition: all 0.3s ease;
-  font-weight: 600;
-  border-width: 2px;
+  font-weight: 500;
+  border-width: 1px;
   border-style: solid;
+  opacity: 0.9;
 }
 
 .btn-action-primary {
-  background-color: #debb9d;
-  border-color: #793d03;
+  background-color: rgba(222, 187, 157, 0.85);
+  border-color: rgba(121, 61, 3, 0.6);
   color: #5A2800;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .btn-action-primary:hover {
-  background-color: #FFF2db;
+  background-color: rgba(255, 242, 219, 0.95);
   border-color: #cfa600;
   color: #793d03;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  opacity: 1;
 }
 
 .btn-secondary {
-  background-color: #0D2E2B;
-  border-color: #4b7874;
-  color: #d7d7d7;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  background-color: rgba(13, 46, 43, 0.7);
+  border-color: rgba(75, 120, 116, 0.6);
+  color: rgba(215, 215, 215, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary:hover {
-  background-color: #4b7874;
-  border-color: #cfa600;
+  background-color: rgba(75, 120, 116, 0.85);
+  border-color: #4b7874;
   color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  opacity: 1;
 }
 
 /* Alternative Background */
