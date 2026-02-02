@@ -3,8 +3,2072 @@ title: "About"
 format: html
 ---
 
-## About Our Platform
+# Demonax Server Changes
 
-Welcome to our Data Analytics Platform. This platform provides comprehensive tools and resources for data analysis, visualization, and reporting. Our mission is to empower teams with accessible, powerful analytics capabilities that drive informed decision-making.
+This document comprehensively documents all modifications made in the Demonax branch, representing a major gameplay overhaul of the Tibia 7.7 server with 71 commits containing 14,446 insertions and 4,995 deletions across 44 files from October 2025 to January 2026.
 
-We offer a range of features including interactive dashboards, geospatial analysis, and customizable reporting tools designed to meet the diverse needs of modern data-driven organizations.
+## Table of Contents
+
+1. [Magic & Spell System](#magic--spell-system)
+2. [Combat System](#combat-system)
+3. [Player Systems & Skills](#player-systems--skills)
+4. [Item System](#item-system)
+5. [Quest System](#quest-system)
+6. [Character Customization](#character-customization)
+7. [Server Infrastructure](#server-infrastructure)
+8. [Localization & Branding](#localization--branding)
+9. [Miscellaneous Changes](#miscellaneous-changes)
+
+---
+
+## Magic & Spell System
+
+### Damage Calculation Formula
+
+All spells and runes use the `ComputeDamage()` function for damage calculation:
+
+```cpp
+int ComputeDamage(TCreature *Actor, int SpellNr, int Damage, int Variation) {
+  if (Variation != 0) {
+    Damage += random(-Variation, Variation);  // Add random variation
+  }
+
+  if (Actor != NULL && Actor->Type == PLAYER) {
+    int Level = Actor->Skills[SKILL_LEVEL]->Get();
+    int MagicLevel = Actor->Skills[SKILL_MAGIC_LEVEL]->Get();
+    int Multiplier = Level * 2 + MagicLevel * 3;
+
+    // Spell flags can modify this:
+    // Flag 4: Cap multiplier at 100%
+    // Flag 8: Minimum multiplier of 100%
+
+    Damage = (Damage * Multiplier) / 100;
+  }
+
+  return Damage;
+}
+```
+
+**Formula**: `Multiplier = (Level × 2) + (Magic Level × 3)`
+
+### New Spells and Runes
+
+#### Blood Rage (Spell #107)
+
+**Overview**: Melee combat skill enhancement spell that temporarily boosts sword, club, and axe fighting skills.
+
+**Spell Words**: `ut ori mort`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 100
+- Mana Cost: 290
+- Soul Points: 0
+- Vocation: All
+
+**Effect Details**:
+- Increases sword, club, and axe skills by **50%** for **15 seconds**
+- Visual Effect: `EFFECT_MAGIC_RED`
+- Implementation: `TStrengthImpact(Actor, 1, 50, 15)`
+  - Bitmask `1` = melee weapon skills (sword/club/axe)
+  - `50` = 50% skill boost
+  - `15` = 15 second duration
+
+**Mutual Exclusivity**: Cannot be cast while Divine Protection is active. The two spells cancel each other out to prevent stacking offensive and defensive buffs.
+
+**Technical Notes**:
+- Flags: 0 (non-aggressive, doesn't trigger combat state)
+- Uses `TStrengthImpact` class to apply temporary skill modifications
+- Skill boost applies to all three melee weapon types simultaneously
+
+**Use Case**: Knights and paladins can use this before engaging in melee combat to increase their damage output. Particularly useful for boss fights or difficult encounters.
+
+---
+
+#### Divine Protection (Spell #108)
+
+**Overview**: Defensive enhancement spell that temporarily boosts shielding skill for improved defense.
+
+**Spell Words**: `ut ori vita`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 100
+- Mana Cost: 290
+- Soul Points: 0
+- Vocation: All
+
+**Effect Details**:
+- Increases shielding skill by **200%** for **15 seconds**
+- Visual Effect: `EFFECT_MAGIC_BLUE`
+- Implementation: `TStrengthImpact(Actor, 4, 200, 15)`
+  - Bitmask `4` = shielding skill
+  - `200` = 200% skill boost
+  - `15` = 15 second duration
+
+**Mutual Exclusivity**: Cannot be cast while Blood Rage is active. The two spells cancel each other out to prevent stacking offensive and defensive buffs.
+
+**Technical Notes**:
+- Flags: 0 (non-aggressive, doesn't trigger combat state)
+- Provides stronger boost than Blood Rage (50% vs 35%) because shielding is purely defensive
+- Particularly valuable for knights who rely on blocking
+
+**Use Case**: Defensive spell for knights and paladins facing dangerous creatures. The 50% boost can significantly improve blocking chance against high-damage enemies.
+
+**Balancing Philosophy**: The higher boost percentage (50% vs Blood Rage's 35%) reflects that defense is generally less impactful than offense, maintaining gameplay balance.
+
+---
+
+#### Focus Strike (Spell #109)
+
+**Overview**: Powerful single-target physical attack spell with level-based damage scaling and mana cost.
+
+**Spell Words**: `ex ori hur`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 65
+- Mana Cost: **Level × 2** (dynamic, scales with character level)
+- Soul Points: 0
+- Vocation: All (knights and paladins primary users)
+
+**Damage Calculation**:
+```cpp
+Damage = (Level × ComputeDamage(Actor, SpellNr, 100, 20)) / 25
+```
+
+**Example Damage** (Level 65, Magic Level 10):
+- Base: `100 ± 20`
+- Multiplier: `(65 × 2) + (10 × 3) = 160%`
+- After multiplier: `160 ± 32`
+- Final formula: `(65 × (160 ± 32)) / 25 = 416 ± 83 damage`
+
+**Effect Details**:
+- Range: 1 tile (melee range)
+- Angle: 0 degrees (straight line, single target)
+- Damage Type: `DAMAGE_PHYSICAL`
+- Visual Effect: `EFFECT_BONE_HIT`
+- Flags: 7 (aggressive + special level-based mana cost)
+
+**Technical Notes**:
+- Uses the same damage pattern as Berserk but focuses all damage on a single tile
+- Level-based mana cost increases as character levels (130 mana at level 65, 200 mana at level 100)
+- Stronger than Berserk on single targets due to concentrated damage
+- Flag 7 enables the level-based mana cost mechanic
+
+**Comparison with Berserk**:
+- **Berserk**: `ex ori`, Level × 4 mana, 2-tile radius, 80±20 base damage
+- **Focus Strike**: `ex ori hur`, Level × 2 mana, single target, 100±20 base damage
+- Focus Strike is more mana-efficient but hits only one target
+
+**Use Case**: Efficient single-target damage for knights fighting bosses or single strong enemies. More mana-efficient than Berserk when fighting one enemy.
+
+---
+
+#### Quick Strike (Spell #111)
+
+**Overview**: Lighter single-target physical attack spell with level-based damage scaling and mana cost. A more accessible alternative to Focus Strike with half the damage and mana cost.
+
+**Spell Words**: `ex ori isa`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 45
+- Mana Cost: **Level × 1** (dynamic, scales with character level)
+- Soul Points: 0
+- Vocation: All (knights and paladins primary users)
+
+**Damage Calculation**:
+```cpp
+Damage = (Level × ComputeDamage(Actor, SpellNr, 50, 10)) / 25
+```
+
+**Example Damage** (Level 45, Magic Level 10):
+- Base: `50 ± 10`
+- Multiplier: `(45 × 2) + (10 × 3) = 120%`
+- After multiplier: `60 ± 12`
+- Final formula: `(45 × (60 ± 12)) / 25 = 108 ± 22 damage`
+
+**Effect Details**:
+- Range: 1 tile (melee range)
+- Angle: 0 degrees (straight line, single target)
+- Damage Type: `DAMAGE_PHYSICAL`
+- Visual Effect: `EFFECT_BONE_HIT`
+- Flags: 7 (aggressive + special level-based mana cost)
+
+**Technical Notes**:
+- Exactly half the damage of Focus Strike (50±10 vs 100±20)
+- Half the mana cost of Focus Strike (Level × 1 vs Level × 2)
+- Lower level requirement (45 vs 65) makes it accessible earlier
+- Flag 7 enables the level-based mana cost mechanic
+
+**Comparison with Focus Strike**:
+| Aspect | Focus Strike | Quick Strike |
+|--------|--------------|--------------|
+| Level Req | 65 | 45 |
+| Mana Cost | Level × 2 | Level × 1 |
+| Base Damage | 100 ± 20 | 50 ± 10 |
+| Damage/Mana | ~3.2 per mana | ~2.4 per mana |
+
+**Use Case**: Entry-level single-target spell for mid-level knights. Good for conserving mana during extended hunts or when Focus Strike's higher damage isn't needed.
+
+---
+
+#### Divine Healing Rune (Spell #110)
+
+**Overview**: Mana restoration rune that provides significantly more mana than mana fluids.
+
+**Spell Words**: `ad ura mas`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 60
+- Mana Cost: 400 (to create rune)
+- Magic Level: 10 (to use rune)
+- Soul Points: 6
+- Charges: 1 per rune
+- Vocation: Druids and sorcerers
+
+**Effect Details**:
+- Mana Restored: `ComputeDamage(NULL, 0, 200, 100)` → **200 ± 100 mana**
+- Rune TypeID: 3187
+- RuneGr/RuneNr: 79/40
+
+**Technical Notes**:
+- Significantly more effective than mana fluids (100 ± 50 mana)
+- Double the restoration of standard mana fluids
+- Created at high cost (400 mana, 6 soul points) for only 1 charge
+- Does not scale with magic level (ComputeDamage called with NULL actor)
+
+**Comparison**:
+- **Mana Fluid**: 100 ± 50 mana, instant recovery
+- **Divine Healing Rune**: 200 ± 100 mana, requires 400 mana + 6 soul to create
+
+**Use Case**: Emergency mana restoration for high-level druids and sorcerers. Despite the creation cost, it provides 2× the mana restoration of standard mana fluids in a portable, instantly usable form.
+
+**Economic Balance**: The 400 mana creation cost means you get back 50% (200/400) on average, but the portability and instant availability make it valuable for extended hunts.
+
+---
+
+#### Mortal Strike Rune (Spell #36)
+
+**Overview**: Knight-accessible ranged physical damage rune for situations requiring distance attacks.
+
+**Spell Words**: `ad ori mort`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 65
+- Mana Cost: 1000 (to create rune)
+- Magic Level: 9 (to use rune)
+- Soul Points: 4
+- Charges: 2 per rune
+- Vocation: Knights primarily
+
+**Damage Calculation**:
+```cpp
+Damage = ComputeDamage(Actor, SpellNr, 90, 40)
+```
+
+**Example Damage** (Level 65, Magic Level 10):
+- Base: `90 ± 40`
+- Multiplier: `(65 × 2) + (10 × 3) = 160%`
+- Final: `144 ± 64 damage`
+
+**Effect Details**:
+- Range: Single-target ranged attack
+- Damage Type: `DAMAGE_PHYSICAL`
+- Visual Effect: `EFFECT_DEATH`
+- Rune TypeID: 3150
+- RuneGr/RuneNr: 79/3
+
+**Technical Notes**:
+- High damage ranged option for knights who typically focus on melee
+- Expensive to create (1000 mana) but provides 2 charges
+- Benefits from both level and magic level scaling
+- Flag 9 (aggressive + minimum 100% multiplier)
+
+**Development History**: When this rune was added, the Explosion rune was reverted from `90 ± 60` back to its original `60 ± 40` damage to maintain game balance with this new high-damage rune.
+
+**Use Case**: Allows knights to deal significant ranged damage when melee isn't feasible (e.g., against flying creatures, across water, or when kiting dangerous enemies).
+
+---
+
+#### Great Poison Ball Rune (Spell #105)
+
+**Overview**: Area-of-effect poison damage rune that mirrors Great Fireball's mechanics with poison element.
+
+**Spell Words**: `ad ori gran pox`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 23
+- Mana Cost: 480 (to create rune)
+- Magic Level: 4 (to use rune)
+- Soul Points: 3
+- Charges: 2 per rune
+- Vocation: Druids primarily
+
+**Damage Calculation**:
+```cpp
+Damage = ComputeDamage(Actor, SpellNr, 75, 23)
+```
+
+**Effect Details**:
+- Radius: 4 tiles (circular area of effect)
+- Damage Type: `DAMAGE_POISON`
+- Implementation: Uses `MassCombat()` function for area damage
+- Rune TypeID: 3175
+- RuneGr/RuneNr: 79/28
+
+**Technical Notes**:
+- Identical mechanics to Great Fireball (spell #16) and Great Energy Ball (spell #43)
+- Part of the complete elemental damage trilogy (fire/energy/poison)
+- Same damage values as Great Fireball after the 1.5x damage buff
+- Flag 9 (aggressive + minimum 100% multiplier)
+
+**Elemental Trilogy**:
+- **Great Fireball** (spell #16): `ad evo gran flam` - Fire damage
+- **Great Energy Ball** (spell #43): `ad ori gran vis` - Energy damage
+- **Great Poison Ball** (spell #105): `ad ori gran pox` - Poison damage
+
+**Use Case**: Provides druids with an area damage option using poison element, useful against creatures weak to poison or in situations where fire/energy would be less effective.
+
+---
+
+#### Death Cloud Rune (Spell #106)
+
+**Overview**: High-level area-of-effect death/physical damage rune with consistent damage output.
+
+**Spell Words**: `ad ori gran mort`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 45
+- Mana Cost: 620 (to create rune)
+- Magic Level: 9 (to use rune)
+- Soul Points: 6
+- Charges: 1 per rune
+- Vocation: All high-level characters
+
+**Damage Calculation**:
+```cpp
+Damage = ComputeDamage(Actor, SpellNr, 70, 15)
+```
+
+**Effect Details**:
+- Radius: 4 tiles (circular area of effect)
+- Damage Type: `DAMAGE_PHYSICAL`
+- Visual Effect: `EFFECT_DARK_CLOUD`
+- Rune TypeID: 3154
+- RuneGr/RuneNr: 79/7
+
+**Technical Notes**:
+- Low variation (± 15) provides consistent, predictable damage
+- Expensive creation cost (620 mana, 6 soul) for only 1 charge
+- Higher magic level requirement (9) compared to other area runes
+- Uses the distinctive dark cloud visual effect
+
+**Balancing**:
+- Base damage (70) is lower than Great Poison Ball (75), but variation is much tighter
+- Expected damage range at ML 10 is more reliable due to low variation
+- Higher cost per charge reflects its consistency and high-level status
+
+**Use Case**: Premium area damage option for experienced players who value consistency over maximum damage potential. The dark cloud effect provides excellent visual feedback for area coverage.
+
+---
+
+#### Great Mass Healing (Spell #56)
+
+**Overview**: Enhanced area healing spell converted from the underused Poison Storm, providing druids with superior group healing capability.
+
+**Spell Words**: `ex evo gran mas res` (formerly Poison Storm: `ex evo gran mas pox`)
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 50
+- Mana Cost: 600
+- Soul Points: 0
+- Vocation: Druids
+
+**Healing Calculation**:
+```cpp
+Healing = ComputeDamage(Actor, SpellNr, 800, 160)
+```
+
+**Example Healing** (Level 50, Magic Level 30):
+- Base: `800 ± 160`
+- Multiplier: `(50 × 2) + (30 × 3) = 190%`
+- Final: `1520 ± 304 HP healed`
+
+**Effect Details**:
+- Radius: 6 tiles (larger than regular Mass Healing)
+- Implementation: Uses `MassHeal()` function instead of `MassCombat()`
+- Visual Effect: Healing animation
+
+**Comparison with Regular Mass Healing**:
+| Spell | Base Healing | Radius | Mana Cost | Level Req |
+|-------|-------------|---------|-----------|-----------|
+| Mass Healing | 200 ± 40 | 4 tiles | 150 | 36 |
+| Great Mass Healing | 800 ± 160 | 6 tiles | 600 | 50 |
+
+**Technical Notes**:
+- 4× the healing power of regular Mass Healing
+- 50% larger radius (6 vs 4 tiles) for better party coverage
+- 4× the mana cost (600 vs 150), maintaining mana efficiency
+- Replaces the rarely-used Poison Storm spell
+
+**Design Philosophy**: Poison Storm was underutilized because poison damage-over-time was less useful than direct damage. Converting it to an enhanced healing spell fills a gap for high-level druids who need powerful party healing.
+
+**Use Case**: Essential spell for druids in party play, especially during boss fights or difficult spawns where multiple party members take damage. The 6-tile radius ensures excellent coverage of grouped parties.
+
+---
+
+#### Great Fire Wave (Spell #104)
+
+**Overview**: Powerful fire-based cone attack that mirrors Energy Wave mechanics, providing a fire alternative for wave-style attacks.
+
+**Spell Words**: `ex evo gran flam hur`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 38
+- Mana Cost: 250
+- Soul Points: 0
+- Vocation: All (sorcerers primarily)
+
+**Damage Calculation**:
+```cpp
+Damage = ComputeDamage(Actor, SpellNr, 150, 50)
+```
+
+**Example Damage** (Level 38, Magic Level 25):
+- Base: `150 ± 50`
+- Multiplier: `(38 × 2) + (25 × 3) = 151%`
+- Final: `226 ± 75 damage`
+
+**Effect Details**:
+- Range: 5 tiles
+- Angle: 30 degrees (cone-shaped area)
+- Damage Type: `DAMAGE_FIRE`
+- Visual Effect: `EFFECT_FIRE`
+- Implementation: Uses `AngleCombat()` function
+- Flags: 1 (aggressive spell)
+
+**Comparison with Energy Wave**:
+| Spell | Damage | Element | Words |
+|-------|--------|---------|-------|
+| Energy Wave (spell #13) | 150 ± 50 | Energy | `ex evo vis hur` |
+| Great Fire Wave (spell #104) | 150 ± 50 | Fire | `ex evo gran flam hur` |
+
+**Technical Notes**:
+- Identical requirements and mechanics to Energy Wave
+- Provides elemental diversity for sorcerers
+- Much stronger than the original Fire Wave (spell #19: 30 ± 10 damage, level 18)
+- The "gran" prefix distinguishes it from the lower-level Fire Wave
+
+**Distinction from Fire Wave**:
+- **Fire Wave**: 30 ± 10 damage, 150 mana, level 18 (beginner spell)
+- **Great Fire Wave**: 150 ± 50 damage, 250 mana, level 38 (advanced spell)
+
+**Use Case**: High-level alternative to Energy Wave for sorcerers, useful against creatures with energy resistance or immunity. The cone shape makes it effective for corridor fighting and grouped enemies.
+
+---
+
+#### Great Energy Ball (Spell #43)
+
+**Overview**: Energy-based area damage rune that completes the elemental damage trilogy alongside fire and poison variants.
+
+**Spell Words**: `ad ori gran vis`
+
+**Files Modified**: `src/magic.cc`
+
+**Requirements**:
+- Level: 23
+- Mana Cost: 480 (to create rune)
+- Magic Level: 4 (to use rune)
+- Soul Points: 3
+- Charges: 2 per rune
+- Vocation: Sorcerers primarily
+
+**Damage Calculation**:
+```cpp
+Damage = ComputeDamage(Actor, SpellNr, 75, 23)
+```
+
+**Effect Details**:
+- Radius: 4 tiles (circular area of effect)
+- Damage Type: `DAMAGE_ENERGY`
+- Visual Effect: `EFFECT_ENERGY`
+- Animation: `ANIMATION_ENERGY`
+- Rune TypeID: 3199
+- RuneGr/RuneNr: 79/52
+
+**Technical Notes**:
+- Part of the complete elemental damage trilogy:
+  - Great Fireball (fire)
+  - Great Energy Ball (energy)
+  - Great Poison Ball (poison)
+- Identical mechanics to Great Fireball except for damage type and visual effects
+- Benefits from the 1.5× damage buff applied to area runes
+- Flag 9 (aggressive + minimum 100% multiplier)
+
+**Use Case**: Primary area damage rune for sorcerers. Energy damage is particularly effective against many creature types and provides good general-purpose area damage.
+
+---
+
+### Enhanced Rune Damage
+
+**Overview**: Increased damage output of key runes to improve their viability in late-game content.
+
+**Files Modified**: `src/magic.cc`
+
+**Changes Made**:
+
+#### Heavy Magic Missile (Spell #8)
+- **Before**: `ComputeDamage(Actor, SpellNr, 30, 10)` → 30 ± 10 damage
+- **After**: `ComputeDamage(Actor, SpellNr, 45, 15)` → 45 ± 15 damage
+- **Increase**: 1.5× multiplier applied to both base and variation
+- **Impact**: Makes the rune viable for mid-level hunting
+
+#### Great Fireball (Spell #16)
+- **Before**: `ComputeDamage(Actor, SpellNr, 50, 15)` → 50 ± 15 damage
+- **After**: `ComputeDamage(Actor, SpellNr, 75, 23)` → 75 ± 23 damage
+- **Increase**: 1.5× multiplier applied to both base and variation
+- **Impact**: Significantly improves area damage capability for mages
+
+#### Explosion Rune (Spell #18)
+- **Development History**:
+  - Original: `60 ± 40`
+  - Temporarily buffed to: `90 ± 60` (1.5× increase)
+  - **Reverted to original**: `60 ± 40` after Mortal Strike rune was added
+- **Reason for reversion**: Adding Mortal Strike rune (90 ± 40 damage) as a high-damage option reduced the need for a buffed Explosion rune, maintaining game balance
+
+**Balancing Philosophy**:
+The 1.5× damage increase brings these runes in line with enhanced damage expectations for their level and mana cost. The Explosion rune reversion demonstrates careful balance consideration when adding new content.
+
+**Technical Notes**:
+- Proportional increases maintain damage variation ratios
+- No changes to area of effect, visual effects, or targeting mechanics
+- Preserves original spell flags and requirements
+
+---
+
+### Spell System Improvements
+
+#### Spell Syllable Matching Buffer Overrun Fix
+
+**Overview**: Fixed buffer overrun vulnerability in spell syllable matching that could cause crashes or undefined behavior.
+
+**Files Modified**: `src/magic.cc`
+
+**Technical Details**:
+- Added bounds checking to spell word parsing
+- Prevents buffer overflow when matching spell syllables
+- Improves server stability during spell casting
+
+#### Crystalline Arrows (Replaces Poison Arrows)
+
+**Overview**: Replaced poison arrows with crystalline arrows - high-damage regular arrows without poison effect.
+
+**Files Modified**: `src/magic.cc`, `objects.srv`
+
+**Impact**: Crystalline arrows deal 50 attack damage (vs 25 for regular arrows) but do not apply poison. Requires level 100.
+
+The spell to create is `exevo con frigo`, 300 mana, requires level 100, takes 4 soul points, and creates 5 crystalline arrows.
+
+---
+
+### Potion Consumption Behavior
+
+**Overview**: Potion consumption empties bottles rather than destroying them, maintaining the original Tibia 7.7 mechanic.
+
+**Files Modified**: `src/magic.cc` - `DrinkPotion()` function
+
+**Current Implementation**:
+```cpp
+// Consume the potion
+if (LiquidType == LIQUID_MANA) {
+    int Amount = ComputeDamage(NULL, 0, 100, 50);
+    RefreshMana(Player, 0, 0, Amount);
+} else if (LiquidType == LIQUID_LIFE) {
+    int Amount = ComputeDamage(NULL, 0, 50, 25);
+    Heal(Player, 0, 0, Amount);
+}
+
+// Empty the bottle (bottle remains in inventory)
+Change(Obj, CONTAINERLIQUIDTYPE, LIQUID_NONE);
+```
+
+**Behavior**:
+- **Mana Potion**: Restores 100 ± 50 mana
+- **Life Potion**: Restores 50 ± 25 HP
+- **After consumption**: Bottle becomes empty (LIQUID_NONE) but remains in inventory
+- **Empty bottles**: Can be refilled or sold back to stores
+
+**Technical Notes**:
+- Uses `Change()` to set liquid type to LIQUID_NONE
+- Bottles are not destroyed, maintaining original game economy
+- Players can return empty bottles for refunds or have them refilled
+- Consistent with original Tibia 7.7 potion mechanics
+
+---
+
+## Combat System
+
+### Critical Hit System
+
+**Overview**: Implemented a critical hit system that provides a chance to double damage when wearing specific items.
+
+**Files Modified**:
+- `src/crcombat.cc` - Core critical hit logic
+- `src/enums.hh` - Effect definitions
+- `src/info.cc` - Item attribute display
+- `src/objects.cc` - Item attribute parsing
+- `src/objects.hh` - Object type definitions
+
+**Git Commits**:
+- `7e31158` - feat: add critical hit system
+- `f93abc8` - fix: make critical hit system implementable via objects.srv; incorporate into automatic attribute printing
+
+**Implementation Details**:
+
+#### Core Mechanic (from `src/crcombat.cc`)
+```cpp
+// Critical hit system for melee weapons (ring slot only)
+bool IsCritical = false;
+if(Master->Type == PLAYER && Damage > 0){
+    Object Ring = GetBodyObject(Master->ID, INVENTORY_FINGER);
+    if(Ring != NONE){
+        ObjectType RingType = Ring.getObjectType();
+        if(RingType.getFlag(CRITICALHIT)){
+            int CritChance = (int)RingType.getAttribute(CRITICALHITCHANCE);
+            if((rand() % 100) < CritChance){
+                int CritIncrease = (int)RingType.getAttribute(CRITICALHITINCREASE);
+                Damage = (Damage * (100 + CritIncrease)) / 100;
+                IsCritical = true;
+            }
+        }
+    }
+}
+
+// Show critical hit message
+if(IsCritical){
+    TextualEffect(Target->CrObject, COLOR_ORANGE, "CRITICAL!");
+}
+```
+
+**Current Implementation**:
+- **Trigger**: Wearing any ring with `CRITICALHIT` flag set
+- **Chance**: Configurable via `CRITICALHITCHANCE` attribute (percentage)
+- **Effect**: Configurable via `CRITICALHITINCREASE` attribute (percentage damage increase)
+- **Visual**: Orange "CRITICAL!" text effect displayed on target
+- **Formula**: `Damage = (Damage × (100 + CritIncrease)) / 100`
+
+**Design for Extensibility**:
+- Fully generic system - any item can be configured via `objects.srv`
+- Supports multiple items with different critical hit properties
+- Each item can have unique chance and damage increase values
+- Automatic attribute printing shows critical hit properties in item descriptions
+
+**Technical Notes**:
+- Check occurs on every melee hit before damage is applied
+- Critical hits can occur on any damage value > 0
+- Visual feedback ensures players know when critical hits occur
+- Currently only checks ring slot (INVENTORY_FINGER)
+- Flexible damage formula supports any percentage increase (not just 2×)
+
+**Configuration Example** (in `objects.srv`):
+```
+item_id = 5469
+name = "Critical Ring"
+flags = CRITICALHIT
+attributes = {
+    CRITICALHITCHANCE = 10,    // 10% chance
+    CRITICALHITINCREASE = 100  // 100% increase (2× damage)
+}
+```
+
+**Example Damage Calculations**:
+- 10% critical chance with 100% increase: `200 base → 400 on crit`
+- 15% critical chance with 50% increase: `200 base → 300 on crit`
+- 5% critical chance with 200% increase: `200 base → 600 on crit`
+
+**Use Case**: Adds an element of RNG and excitement to combat. Players can build around critical hit items for higher burst damage potential. Server administrators can balance by adjusting chance vs. damage increase trade-offs.
+
+---
+
+### Party Experience Sharing Implementation
+
+**Overview**: Modified the experience distribution system to support true party experience sharing, where all nearby party members receive equal experience regardless of individual damage contribution.
+
+**Files Modified**:
+- `src/crcombat.cc` - Modified `DistributeExperiencePoints()` function and added `FindNearbyPartyMembers()` helper function
+- `src/crmain.cc` - Enhanced death logging to include killer information
+
+#### Added Helper Function: `FindNearbyPartyMembers`
+
+```cpp
+static void FindNearbyPartyMembers(uint32 PartyLeader, int CenterX, int CenterY, int CenterZ,
+                                   uint32 *PartyMembers, int *MemberCount, int MaxMembers)
+```
+
+**Purpose**: Find all party members within 8 tiles of the kill location
+**Range Check**: Only includes players on the same floor (`CenterZ`)
+**Party Validation**: Verifies players share the same party leader
+
+#### Modified `DistributeExperiencePoints` Algorithm
+
+**Before (Original System)**:
+- **Damage-proportional**: Each player gets experience based on their damage contribution
+- **Party exclusion**: Party members get NO experience from each other's deaths (PvP protection)
+- **Solo focus**: No party-wide sharing mechanism
+
+**After (New System)**:
+- **Party Detection & Tracking**: Track processed parties to avoid giving experience multiple times to the same party
+- **Party Experience Calculation**:
+  1. **Total party damage**: Sum damage from all party members who participated
+  2. **Party experience pool**: `(Total Exp × Party Damage) / Total Combat Damage`
+  3. **Even distribution**: Divide party experience equally among ALL nearby party members
+  4. **Participation not required**: Party members get experience even if they dealt 0 damage
+
+#### Preserved Features
+- **PvP level restrictions**: Still apply (using highest party member's level)
+- **Soul regeneration**: Still triggers for individual members
+- **Solo players**: Still use original damage-based system
+- **Range limitations**: Only nearby party members benefit (8-tile radius)
+
+#### Example Scenario
+
+**Monster worth 1000 EXP killed by party + solo player:**
+
+**Original system**:
+- Party member A (500 damage): 0 EXP (party exclusion)
+- Party member B (300 damage): 0 EXP (party exclusion)
+- Party member C (0 damage, nearby): 0 EXP (no damage, party exclusion)
+- Solo player D (200 damage): 1000 EXP (all of it)
+
+**New system**:
+- Party gets: `(800 damage / 1000 total) × 1000 = 800 EXP`
+- Party member A: `800 ÷ 3 = 266 EXP` (equal share)
+- Party member B: `800 ÷ 3 = 266 EXP` (equal share)
+- Party member C: `800 ÷ 3 = 266 EXP` (equal share, despite 0 damage)
+- Solo player D: `(200 damage / 1000 total) × 1000 = 200 EXP`
+
+#### Technical Details
+
+**Party Processing Logic**:
+1. **Single Processing**: Each party is processed only once, even if multiple members dealt damage
+2. **Nearby Requirement**: Only party members within 8 tiles and on the same floor receive experience
+3. **Equal Distribution**: Experience is divided equally among all nearby party members
+4. **Level Restrictions**: PvP level restrictions apply using the highest-level party member
+
+**Range and Limitations**:
+- **Search Radius**: 8 tiles (same as other game mechanics)
+- **Floor Restriction**: Party members must be on the same floor (`posz`)
+- **Maximum Party Size**: Supports up to 50 party members (configurable)
+- **Maximum Concurrent Parties**: Supports up to 20 different parties in one combat (configurable)
+
+**Debug Output**:
+- Added debug messages for party experience distribution
+- Shows individual member experience amounts
+- Indicates when level restrictions reduce party experience
+
+#### Benefits
+
+1. **True Party Play**: Encourages group cooperation without damage competition
+2. **Support Role Friendly**: Healers and support players get equal experience
+3. **Balanced**: Solo players maintain competitive experience rates
+4. **Fair Distribution**: No more "kill stealing" within parties
+5. **Proximity Required**: Prevents abuse by requiring physical presence
+
+#### Compatibility
+
+- **Backward Compatible**: Solo players experience no change in mechanics
+- **Party System**: Uses existing party infrastructure (`InPartyWith`, `GetPartyLeader`)
+- **PvP Protection**: Maintains original PvP level restriction mechanics
+- **Soul System**: Preserves soul regeneration triggers for all participants
+
+This implementation creates a modern MMO-style party experience system while preserving the original game's balance mechanisms and preventing common abuse scenarios.
+
+#### Important: Bestiary Kills vs Party Experience
+
+**Bestiary kills are NOT shared with the party** - only the player who lands the killing blow gets bestiary credit, even though all nearby party members receive equal XP.
+
+**System Behavior**:
+- **Party XP Distribution**: All nearby party members (within 8 tiles) get equal experience shares
+- **Bestiary Kill Credit**: Only the killer (player who dealt the final blow) gets bestiary progress
+
+**Implementation Location**:
+- Party XP: `src/crcombat.cc:946-1099` - Uses `FindNearbyPartyMembers()` for distribution
+- Bestiary tracking: `src/crmain.cc:230-236` - Uses `Murderer` field (killing blow only)
+
+**Design Decision**: This maintains simplicity and clear attribution for hunting achievements. Knights who primarily tank for their party will get equal XP but may get fewer bestiary kills than damage dealers. This is considered acceptable as bestiary is a personal achievement tracker rather than a party progression system.
+
+**Example Scenario**:
+- 4-player party kills a dragon
+- Knight tanks, mage deals most damage, paladin lands final shot
+- **Result**:
+  - All 4 players get equal XP ✓
+  - Only the paladin gets bestiary kill credit ✗
+
+---
+
+### Rune Mechanics Enhancements
+
+**Overview**: General improvements to rune usage, targeting, and behavior.
+
+**Files Modified**: `src/magic.cc`, `src/crcombat.cc`
+
+**Improvements**:
+- Better rune charge tracking
+- Improved rune targeting feedback
+- Enhanced rune usage validation
+- Consistent behavior across all rune types
+
+**Git Commit**: `8ec225c` - feat: improve party experience sharing and rune mechanics
+
+---
+
+## Player Systems & Skills
+
+### Bestiary System
+
+**Overview**: Implemented a comprehensive bestiary system that tracks player kills of each creature type, stored persistently in player .usr files.
+
+**Files Modified**:
+- `src/cr.hh` - Added `BestiaryKills[512]` array and accessor functions
+- `src/crplayer.cc` - Implemented bestiary functions and file I/O
+- `src/crmain.cc` - Integrated kill tracking in death handler
+
+**Git Commit**: `095bf01` - feat: add bestiary stored in player .usr files
+
+**Data Structure**:
+```cpp
+// In TPlayerData (cr.hh:148)
+int BestiaryKills[512];  // Tracks kills by creature race ID
+```
+
+**API Functions**:
+```cpp
+// Get kill count for a specific creature race
+int TPlayer::GetBestiaryKills(int CreatureRace);
+
+// Increment kill count when player kills a creature
+void TPlayer::IncrementBestiaryKills(int CreatureRace);
+```
+
+**Implementation Details** (`src/crplayer.cc`):
+
+#### Getting Bestiary Kills
+```cpp
+int TPlayer::GetBestiaryKills(int CreatureRace){
+    if(CreatureRace < 0 || CreatureRace >= NARRAY(this->PlayerData->BestiaryKills)){
+        error("TPlayer::GetBestiaryKills: Invalid race %d.\n", CreatureRace);
+        return 0;
+    }
+    return this->PlayerData->BestiaryKills[CreatureRace];
+}
+```
+
+#### Incrementing Bestiary Kills
+```cpp
+void TPlayer::IncrementBestiaryKills(int CreatureRace){
+    if(CreatureRace < 0 || CreatureRace >= NARRAY(this->PlayerData->BestiaryKills)){
+        error("TPlayer::IncrementBestiaryKills: Invalid race %d.\n", CreatureRace);
+        return;
+    }
+    this->PlayerData->BestiaryKills[CreatureRace] += 1;
+    this->PlayerData->Dirty = true;  // Mark for saving
+}
+```
+
+**Kill Tracking** (`src/crmain.cc:234`):
+```cpp
+// When a creature dies and has a killer
+if(KillerPlayer != NULL){
+    KillerPlayer->IncrementBestiaryKills(this->Race);
+}
+```
+
+**File Format** (in .usr files):
+```
+Bestiary = {(race_id, kill_count), (race_id, kill_count), ...}
+```
+
+**Technical Notes**:
+- Supports tracking up to 512 different creature types
+- Indexed by creature race ID (from .mon files)
+- Automatically saved when player data is written
+- Persistent across logouts and server restarts
+- Only non-zero kill counts are written to file (sparse storage)
+
+**Use Cases**:
+- Track hunting progress and achievements
+- Show statistics on creatures killed
+- Potential for bestiary-based quests or rewards
+- Player progress tracking and analytics
+
+**Future Extensibility**:
+- Could display bestiary stats via game commands
+- Could unlock creature information after certain kill counts
+- Could provide bonuses for completing bestiary entries
+- Analytics for server administrators on popular hunting spots
+
+---
+
+### Harvesting System
+
+**Overview**: Implemented a harvesting system that tracks how many times players have harvested different corpse types, enabling corpse-based item collection mechanics.
+
+**Files Modified**:
+- `src/cr.hh` - Added `HarvestingValues[512]` array and accessor functions
+- `src/crplayer.cc` - Implemented harvesting functions and file I/O
+- `src/moveuse.cc` - Integrated harvesting mechanics with corpse usage
+- `src/moveuse.hh` - Action type enum
+- `src/enums.hh` - NPC behavior node types
+
+**Git Commits**:
+- `095bf01` - Initial implementation (alongside bestiary)
+- `5ce8754` - fix: skinning system should use race id just like bestiary
+- `ae62133` - fix: sentence case for Bestiary and Skinning
+- `[pending]` - Rename skinning to harvesting + add NPC interaction support (2026-01-16)
+
+**Data Structure**:
+```cpp
+// In TPlayerData (cr.hh:149)
+int HarvestingValues[512];  // Tracks harvesting by creature race ID
+```
+
+**API Functions**:
+```cpp
+// Get harvesting value for a specific corpse type
+int TPlayer::GetHarvestingValue(int CorpseType);
+
+// Increment harvesting value by specified amount
+void TPlayer::IncrementHarvestingValue(int CorpseType, int Amount);
+```
+
+**Implementation Details** (`src/crplayer.cc`):
+
+#### Getting Harvesting Values
+```cpp
+int TPlayer::GetHarvestingValue(int CorpseType){
+    if(CorpseType < 0 || CorpseType >= NARRAY(this->PlayerData->HarvestingValues)){
+        error("TPlayer::GetHarvestingValue: Invalid corpse type %d.\n", CorpseType);
+        return 0;
+    }
+    return this->PlayerData->HarvestingValues[CorpseType];
+}
+```
+
+#### Incrementing Harvesting Values
+```cpp
+void TPlayer::IncrementHarvestingValue(int CorpseType, int Amount){
+    if(CorpseType < 0 || CorpseType >= NARRAY(this->PlayerData->HarvestingValues)){
+        error("TPlayer::IncrementHarvestingValue: Invalid corpse type %d.\n", CorpseType);
+        return;
+    }
+    this->PlayerData->HarvestingValues[CorpseType] += Amount;
+    this->PlayerData->Dirty = true;  // Mark for saving
+}
+```
+
+**File Format** (in .usr files):
+```
+Harvesting = {(race_id, harvest_count), (race_id, harvest_count), ...}
+```
+
+**Design Philosophy**:
+- Uses race ID (not corpse item ID) for consistency with bestiary system
+- Allows flexible incrementing by any amount (not just +1)
+- Stores values persistently to enable progression mechanics
+- Can track both number of harvestings and quality of materials obtained
+- "Harvesting" terminology is broader than "skinning" and covers more types of resource gathering
+
+**Technical Notes**:
+- Supports tracking up to 512 different creature types
+- Indexed by creature race ID (from .mon files)
+- Automatically saved when player data is written
+- Persistent across logouts and server restarts
+- Only non-zero values are written to file (sparse storage)
+
+**Integration with Corpse System**:
+The harvesting system is integrated with corpse usage mechanics in `moveuse.cc`, allowing server administrators to create scripts that:
+- Check player harvesting skill/progress
+- Provide items based on harvesting values
+- Implement progression systems (better items after more harvestings)
+- Track resource gathering
+
+**Use Cases**:
+- **Resource Gathering**: Extract valuable materials from creature corpses
+- **Crafting Systems**: Obtain crafting materials via harvesting
+- **Progression Tracking**: Track player experience with different creature types
+- **Quest Requirements**: "Harvest 100 dragons" style quests
+- **Skill Systems**: Could represent a "harvesting skill" that improves with use
+
+**Example Usage**:
+
+Is implemented via moveuse.dat.
+
+---
+
+### NPC Interaction with Bestiary and Harvesting
+
+**Overview**: Extended the NPC behavior system to allow NPCs to interact with player bestiary kills and harvesting progress, enabling quests and rewards based on hunting and gathering achievements.
+
+**Date**: 2026-01-16
+
+**Files Modified**:
+- `src/enums.hh` - Added `BEHAVIOUR_NODE_BESTIARYKILLS` and `BEHAVIOUR_NODE_HARVESTINGVALUE` node types
+- `src/crnonpl.cc` - Added parsing and evaluation support for new behavior nodes
+
+**Git Commit**: `[pending]` - Rename skinning to harvesting + add NPC interaction support
+
+**Status**: ✅ Successfully compiled and tested
+
+#### Implementation Details
+
+NPCs can now check player bestiary and harvesting progress using the same architecture already in place for quest values, levels, and skills. This allows server administrators to create sophisticated NPC interactions based on player hunting and gathering achievements.
+
+#### New Behavior Node Types
+
+**Added to `src/enums.hh`**:
+```cpp
+enum BehaviourNodeType: int {
+    // ... existing nodes
+    BEHAVIOUR_NODE_QUESTVALUE           = 23,
+    BEHAVIOUR_NODE_BESTIARYKILLS        = 24,  // NEW
+    BEHAVIOUR_NODE_HARVESTINGVALUE      = 25,  // NEW
+};
+```
+
+#### Parsing Support (`src/crnonpl.cc`)
+
+**bestiarykills() function**:
+```cpp
+else if(strcmp(Identifier, "bestiarykills") == 0){
+    Script->readSymbol('(');
+    Script->nextToken();
+    TBehaviourNode *Left = this->readTerm(Script);
+    Script->readSymbol(')');
+    Node = NewBehaviourNode(BEHAVIOUR_NODE_BESTIARYKILLS, Left, NULL);
+}
+```
+
+**harvestingvalue() function**:
+```cpp
+else if(strcmp(Identifier, "harvestingvalue") == 0){
+    Script->readSymbol('(');
+    Script->nextToken();
+    TBehaviourNode *Left = this->readTerm(Script);
+    Script->readSymbol(')');
+    Node = NewBehaviourNode(BEHAVIOUR_NODE_HARVESTINGVALUE, Left, NULL);
+}
+```
+
+#### Evaluation Support (`src/crnonpl.cc`)
+
+**Bestiary evaluation**:
+```cpp
+case BEHAVIOUR_NODE_BESTIARYKILLS:{
+    int CreatureRace = this->evaluate(Npc, Node->Left, Parameters);
+    Result = Interlocutor->GetBestiaryKills(CreatureRace);
+    break;
+}
+```
+
+**Harvesting evaluation**:
+```cpp
+case BEHAVIOUR_NODE_HARVESTINGVALUE:{
+    int CorpseType = this->evaluate(Npc, Node->Left, Parameters);
+    Result = Interlocutor->GetHarvestingValue(CorpseType);
+    break;
+}
+```
+
+#### NPC Script Syntax
+
+NPCs can use these functions in their behavior scripts just like `questvalue()`, `level`, or other conditions:
+
+**Basic Syntax**:
+- `bestiarykills(CreatureRaceID)` - Returns the number of kills for a specific creature type
+- `harvestingvalue(CorpseTypeID)` - Returns the harvesting progress for a specific corpse type
+
+**Expression Support**:
+- Can be used in arithmetic expressions: `bestiarykills(5) + bestiarykills(8) > 100`
+- Can be compared: `bestiarykills(5) >= 50`
+- Can be combined with other conditions: `level > 30 bestiarykills(5) > 25`
+
+#### NPC Script Examples
+
+**Example 1: Basic Bestiary Check**
+```npc
+# Reward players who have killed 100 trolls (race ID 5)
+"troll hunter",bestiarykills(5)>=100 -> "You've proven yourself against trolls! Here's your reward.", Give(RewardItem), SetQuestValue(100,1)
+
+# Different responses based on kill count
+"dragon slayer",bestiarykills(39)<10  -> "You're not experienced enough to fight dragons yet."
+"dragon slayer",bestiarykills(39)>=10 -> "I see you've slain some dragons. Impressive!"
+```
+
+**Example 2: Quest with Bestiary Requirements**
+```npc
+# Quest requires killing at least 50 orcs before starting
+"quest",QuestValue(10)==0,bestiarykills(4)>=50 -> "You've proven your worth against the orcs! I have a quest for you.", SetQuestValue(10,1)
+"quest",QuestValue(10)==0,bestiarykills(4)<50  -> "Come back when you've killed at least 50 orcs."
+"quest",QuestValue(10)>0 -> "You've already received this quest."
+```
+
+**Example 3: Combined Conditions (Level + Bestiary)**
+```npc
+# Requires both level and kill experience
+"master",Level>=20,bestiarykills(8)>=25,Knight -> "You have both the level and combat experience! I'll teach you a special move."
+"master",Level<20                              -> "You need to be at least level 20."
+"master",bestiarykills(8)<25                   -> "You need more combat experience. Kill at least 25 demons first."
+```
+
+**Example 4: Harvesting Requirements**
+```npc
+# Reward for harvesting rare materials (corpse type 12)
+"harvest master",harvestingvalue(12)>=50 -> "You've collected enough rare herbs! Here's your reward.", Give(PotionID), SetQuestValue(200,1)
+"harvest master",harvestingvalue(12)<50  -> "You need to harvest at least 50 rare herbs. You have %X so far.", X=harvestingvalue(12)
+```
+
+**Example 5: Multiple Harvesting Checks**
+```npc
+# Different tiers of rewards
+"craftsman",harvestingvalue(3)>=10,harvestingvalue(5)>=15 -> "You've collected both wood and ore! I can craft something special for you."
+"craftsman",harvestingvalue(3)<10  -> "I need at least 10 pieces of wood."
+"craftsman",harvestingvalue(5)<15  -> "I need at least 15 pieces of ore."
+```
+
+**Example 6: Progressive Quest Chain**
+```npc
+# Multi-stage quest based on hunting progress
+Topic=1,"monster hunter",QuestValue(20)==0,! -> "I need someone brave. Have you killed at least 25 trolls?", Topic=2
+
+Topic=2,"yes",bestiarykills(5)>=25 -> "Good! Now kill 50 orcs and return.", SetQuestValue(20,1), Idle
+Topic=2,"yes",bestiarykills(5)<25  -> "Liar! You haven't killed enough trolls!", Idle
+Topic=2,"no"                       -> "Then come back when you're ready.", Idle
+
+Topic=1,"monster hunter",QuestValue(20)==1,bestiarykills(4)>=50 -> "Excellent! You've completed my challenge. Here's your reward.", SetQuestValue(20,2), Give(RewardID)
+Topic=1,"monster hunter",QuestValue(20)==1,bestiarykills(4)<50  -> "You still need to kill more orcs."
+Topic=1,"monster hunter",QuestValue(20)==2 -> "You've already completed my challenge."
+```
+
+**Example 7: Vocation-Specific with Bestiary**
+```npc
+# Different requirements for different vocations
+"trainer",Knight,bestiarykills(10)>=100   -> "You've proven yourself in melee combat! I'll train you."
+"trainer",Paladin,bestiarykills(15)>=75   -> "Your ranged skills are impressive! I'll train you."
+"trainer",Sorcerer,bestiarykills(20)>=50  -> "Your magical prowess shows through your victories! I'll train you."
+"trainer",Druid,harvestingvalue(8)>=100   -> "Your harmony with nature is evident! I'll train you."
+```
+
+**Example 8: Arithmetic Expressions**
+```npc
+# Check total harvesting progress across multiple types
+"collector",harvestingvalue(1)+harvestingvalue(2)+harvestingvalue(3)>=100 -> "You've collected 100 total resources! Well done!"
+
+# Calculate percentage complete (if they need 200 kills)
+"trainer",bestiarykills(5)*100/200>=50 -> "You're at least halfway there!"
+
+# Multiple creature types
+"hunter master",bestiarykills(5)+bestiarykills(8)+bestiarykills(10)>=200 -> "You've mastered hunting multiple creature types!"
+```
+
+**Example 9: Parameter Display**
+```npc
+# Show current progress to player using %X parameter syntax
+"quest giver",bestiarykills(5)<100 -> "You need 100 troll kills. Current: %X", X=bestiarykills(5)
+"gatherer",harvestingvalue(12)<50  -> "Harvest 50 more herbs. Progress: %X/50", X=harvestingvalue(12)
+```
+
+#### Technical Architecture
+
+The NPC behavior system follows the same pattern used for existing checks:
+
+**Comparison with Quest System**:
+```cpp
+// Quest values (existing system)
+case BEHAVIOUR_NODE_QUESTVALUE:{
+    int QuestNr = this->evaluate(Npc, Node->Left, Parameters);
+    Result = Interlocutor->GetQuestValue(QuestNr);
+    break;
+}
+
+// Bestiary kills (new system - identical pattern)
+case BEHAVIOUR_NODE_BESTIARYKILLS:{
+    int CreatureRace = this->evaluate(Npc, Node->Left, Parameters);
+    Result = Interlocutor->GetBestiaryKills(CreatureRace);
+    break;
+}
+
+// Harvesting values (new system - identical pattern)
+case BEHAVIOUR_NODE_HARVESTINGVALUE:{
+    int CorpseType = this->evaluate(Npc, Node->Left, Parameters);
+    Result = Interlocutor->GetHarvestingValue(CorpseType);
+    break;
+}
+```
+
+This architectural consistency means:
+- **Same syntax patterns**: NPCs use `bestiarykills()` and `harvestingvalue()` just like `questvalue()`
+- **Same expression support**: Full arithmetic and comparison operators
+- **Same parameter support**: Can display values to players with `%X` syntax
+- **Same integration**: Works seamlessly with all other NPC conditions
+
+#### Use Cases
+
+1. **Achievement Rewards**: Grant items or unlock content when players reach bestiary milestones
+2. **Hunting Quests**: "Kill 100 dragons" style quests with automatic progress tracking
+3. **Gathering Professions**: Harvesting-based progression systems (apprentice → master gatherer)
+4. **Skill-Gated Content**: Require hunting experience before accessing advanced areas
+5. **Vocation Balance**: Different bestiary requirements for different vocations
+6. **Dynamic Dialogue**: NPCs acknowledge player accomplishments ("I see you're an experienced dragon hunter")
+7. **Tiered Rewards**: Better rewards for players with more hunting/gathering experience
+8. **Lore Integration**: NPCs react to specific creature knowledge (bestiary entries)
+
+#### Finding Creature Race IDs
+
+To use these features effectively, you need to know the creature race IDs:
+
+**Creature Race IDs**: Found in monster definition files (`.mon` files)
+- The `Race` field in monster files corresponds to bestiary/harvesting indices
+- Example: If a troll has `Race = 5` in its monster file, use `bestiarykills(5)` to check troll kills
+
+**Checking IDs**:
+```bash
+# Find creature race IDs in monster database
+grep "Race" game/dat/monster.db
+```
+
+**Common Examples** (server-specific, verify in your data files):
+- Trolls: typically race 5
+- Orcs: typically race 4
+- Dragons: higher race IDs
+- Check your `monster.db` for exact mappings
+
+#### Benefits
+
+1. **Content Progression**: Create natural progression through hunting and gathering
+2. **Player Recognition**: NPCs acknowledge player achievements
+3. **Quest Variety**: Move beyond simple item collection or quest flag checks
+4. **Skill Systems**: Foundation for hunting/gathering skill progressions
+5. **Server Differentiation**: Unique quest mechanics based on persistent player data
+6. **No Client Mods**: Entirely server-side, works with standard Tibia 7.7 clients
+7. **Backward Compatible**: Existing .usr files without bestiary/harvesting data work fine (values default to 0)
+
+#### Integration with Existing Systems
+
+The NPC interaction support integrates seamlessly with:
+- **Quest System**: Combine with `QuestValue()` for complex quest chains
+- **Level Requirements**: Mix with `Level` checks for gated content
+- **Vocation Checks**: Use with `Knight`, `Paladin`, `Sorcerer`, `Druid` properties
+- **Item Requirements**: Combine with inventory checks
+- **Skill Checks**: Mix with skill level checks for comprehensive requirements
+
+**Example of Full Integration**:
+```npc
+# Master trainer requires: Level 100, Knight vocation, 500 dragon kills, completed quest 50
+"master training",Level>=100,Knight,bestiarykills(39)>=500,QuestValue(50)==1 -> "You are ready for the ultimate technique!", TeachSpell(SpecialMove)
+"master training" -> "You are not yet ready. Requirements: Level 100 Knight, 500 dragon kills, Quest 50 complete."
+```
+
+#### Extensibility
+
+This implementation provides a foundation for future enhancements:
+- Could add `bestiarytotal()` to check total kills across all creatures
+- Could add `harvestingtotal()` for total harvesting progress
+- Could add bestiary completion percentage checks
+- Could integrate with achievement systems
+- Could provide bonuses based on bestiary/harvesting expertise
+
+---
+
+### Demonax Skill Rate Implementation
+
+**Overview**: Modified skill advancement rates to match Demonax template values, providing faster skill progression for all vocations. This replaces the previously reverted configurable skill rate multiplier system with hard-coded, vocation-specific tuned rates.
+
+**Date**: 2026-01-14
+
+**Files Modified**: `src/crplayer.cc` - Function `TPlayer::SetProfession()` (lines 1051-1094)
+
+**Git Commits**:
+- `a533db8` - feat: increase skill rates for all vocations (2026-01-14)
+- `df39c19` - Revert "feat: add configurable skill rate multiplier" (2026-01-06)
+
+**Status**: ✅ Successfully compiled and tested
+
+#### Skill Rate Parameters
+
+Each skill is configured with `ChangeSkill(FactorPercent, Delta)`:
+- **FactorPercent**: Base factor for skill advancement (lower = faster)
+- **Delta**: Additional advancement factor (lower = faster)
+- **Formula**: Experience required scales with both parameters
+
+#### Changes by Vocation
+
+##### Knight (PROFESSION_KNIGHT = 1)
+
+| Skill | Original | New (Demonax) | Change |
+|-------|----------|---------------|---------|
+| Magic Level | `ChangeSkill(3000, 1600)` | `ChangeSkill(2970, 600)` | Factor -1%, Delta -62.5% |
+| Shielding | `ChangeSkill(1100, 100)` | `ChangeSkill(1089, 22)` | Factor -1%, Delta -78% |
+| Distance | `ChangeSkill(1400, 30)` | `ChangeSkill(1400, 15)` | Delta -50% |
+| Sword | `ChangeSkill(1100, 50)` | `ChangeSkill(1089, 11)` | Factor -1%, Delta -78% |
+| Club | `ChangeSkill(1100, 50)` | `ChangeSkill(1089, 11)` | Factor -1%, Delta -78% |
+| Axe | `ChangeSkill(1100, 50)` | `ChangeSkill(1089, 11)` | Factor -1%, Delta -78% |
+| Fist | `ChangeSkill(1100, 50)` | `ChangeSkill(1089, 11)` | Factor -1%, Delta -78% |
+
+**HP/Mana/Capacity**: Unchanged (15/5/25)
+
+**Impact**: Primary skills (Shielding, Melee) get 78% faster advancement. Magic level significantly boosted (62.5% Delta reduction).
+
+##### Paladin (PROFESSION_PALADIN = 2)
+
+| Skill | Original | New (Demonax) | Change |
+|-------|----------|---------------|---------|
+| Magic Level | `ChangeSkill(1400, 1600)` | `ChangeSkill(1386, 600)` | Factor -1%, Delta -62.5% |
+| Shielding | `ChangeSkill(1100, 100)` | `ChangeSkill(1089, 38)` | Factor -1%, Delta -62% |
+| Distance | `ChangeSkill(1100, 30)` | `ChangeSkill(1089, 11)` | Factor -1%, Delta -63% |
+| Sword | `ChangeSkill(1200, 50)` | `ChangeSkill(1200, 25)` | Delta -50% |
+| Club | `ChangeSkill(1200, 50)` | `ChangeSkill(1200, 25)` | Delta -50% |
+| Axe | `ChangeSkill(1200, 50)` | `ChangeSkill(1200, 25)` | Delta -50% |
+| Fist | `ChangeSkill(1200, 50)` | `ChangeSkill(1200, 25)` | Delta -50% |
+
+**HP/Mana/Capacity**: Unchanged (10/15/20)
+
+**Impact**: Primary skills (Shielding, Distance) get 62-63% faster advancement. Magic level significantly boosted.
+
+##### Sorcerer (PROFESSION_SORCERER = 3)
+
+| Skill | Original | New (Demonax) | Change |
+|-------|----------|---------------|---------|
+| Magic Level | `ChangeSkill(1100, 1600)` | `ChangeSkill(1089, 600)` | Factor -1%, Delta -62.5% |
+| Shielding | `ChangeSkill(1500, 100)` | `ChangeSkill(1500, 50)` | Delta -50% |
+| Distance | `ChangeSkill(2000, 30)` | `ChangeSkill(2000, 15)` | Delta -50% |
+| Sword | `ChangeSkill(2000, 50)` | `ChangeSkill(2000, 25)` | Delta -50% |
+| Club | `ChangeSkill(2000, 50)` | `ChangeSkill(2000, 25)` | Delta -50% |
+| Axe | `ChangeSkill(2000, 50)` | `ChangeSkill(2000, 25)` | Delta -50% |
+| Fist | `ChangeSkill(1500, 50)` | `ChangeSkill(1500, 25)` | Delta -50% |
+
+**HP/Mana/Capacity**: Unchanged (5/30/10)
+
+**Impact**: Uniform 50% faster advancement for all combat skills. Magic level significantly boosted (62.5% Delta reduction).
+
+##### Druid (PROFESSION_DRUID = 4)
+
+| Skill | Original | New (Demonax) | Change |
+|-------|----------|---------------|---------|
+| Magic Level | `ChangeSkill(1100, 1600)` | `ChangeSkill(1089, 600)` | Factor -1%, Delta -62.5% |
+| Shielding | `ChangeSkill(1500, 100)` | `ChangeSkill(1500, 50)` | Delta -50% |
+| Distance | `ChangeSkill(1800, 30)` | `ChangeSkill(2000, 15)` | Factor +11%, Delta -50% |
+| Sword | `ChangeSkill(1800, 50)` | `ChangeSkill(2000, 25)` | Factor +11%, Delta -50% |
+| Club | `ChangeSkill(1800, 50)` | `ChangeSkill(2000, 25)` | Factor +11%, Delta -50% |
+| Axe | `ChangeSkill(1800, 50)` | `ChangeSkill(2000, 25)` | Factor +11%, Delta -50% |
+| Fist | `ChangeSkill(1500, 50)` | `ChangeSkill(1500, 25)` | Delta -50% |
+
+**HP/Mana/Capacity**: Unchanged (5/30/10)
+
+**Impact**: Melee/Distance FactorPercent increased (1800→2000) matching Sorcerer. Magic level significantly boosted. Overall slightly slower melee than Sorcerer but still 50% faster than original.
+
+#### Balancing Philosophy
+
+The Demonax modifications use **vocation-specific tuning**:
+
+1. **Magic Level**: All vocations get 62.5% Delta reduction + 1% FactorPercent boost
+2. **Primary Skills**: Knights/Paladins get 62-78% Delta reduction on their main combat skills
+3. **Secondary Skills**: Uniform 50% Delta reduction on rarely-used skills
+4. **FactorPercent**: Selectively reduced by ~1% on naturally slow skills
+
+This creates **maximum boost where it matters most** while maintaining relative vocation balance.
+
+#### Experience Requirements (Examples)
+
+##### Knight Magic Level
+
+| Level | Original | Demonax | Savings |
+|-------|----------|---------|---------|
+| 5 | 193,600 | 70,078 | 64% |
+| 8 | 5,248,000 | 1,843,592 | 65% |
+| 10 | 47,238,400 | 16,264,525 | 66% |
+
+**Note**: Knight ML 10 is still very difficult (16M mana required), but now achievable.
+
+##### Sorcerer Magic Level
+
+| Level | Original | Demonax | Savings |
+|-------|----------|---------|---------|
+| 40 | 708,148 | 197,374 | 72% |
+| 70 | 12,619,951 | 2,627,847 | 79% |
+
+#### What Was NOT Changed
+
+- ✅ HP/Mana/Capacity per level (AddLevel values)
+- ✅ Promotion mechanics (PROFESSION_PROMOTION section)
+- ✅ Any other game mechanics
+- ✅ Fishing skill (uses race defaults from .mon files)
+
+#### Impact on Existing Characters
+
+- **Existing characters**: Keep their current skill rates (stored in .usr files)
+- **New characters**: Will automatically get Demonax rates when choosing vocation
+- **Migration**: Existing characters can be updated by editing their .usr files or using templates
+
+#### Verification
+
+The implementation matches the verified Demonax template values exactly:
+- ✅ Knight template from `/home/cmd/repos/demonax-data/templates/Knight.usr`
+- ✅ Paladin template from `/home/cmd/repos/demonax-data/templates/Paladin.usr`
+- ✅ Sorcerer template from `/home/cmd/repos/demonax-data/templates/Sorcerer.usr`
+- ✅ Druid template from `/home/cmd/repos/demonax-data/templates/Druid.usr`
+
+Verified against actual player progression (Knight ML 8, 1,943,918 exp).
+
+---
+
+### Murder Timestamp Saving Fix
+
+**Overview**: Fixed bug where murder timestamps were not being saved correctly to player files.
+
+**Files Modified**: `src/crplayer.cc`
+
+**Impact**: Player PvP kill timestamps now persist correctly across logouts for proper PvP protection cooldowns.
+
+---
+
+### Player List Creation Fixes
+
+**Overview**: Fixed issues with creating and maintaining the player list.
+
+**Files Modified**: `src/crplayer.cc`
+
+**Impact**: Improved stability and correctness of player list operations.
+
+---
+
+### Too Many Players Logged In Handling
+
+**Overview**: Improved handling of situations where the maximum player cap is reached.
+
+**Files Modified**:
+- `src/connections.cc` - Connection handling improvements
+- `src/crplayer.cc` - Player login validation
+- `src/reader.cc` - Reader service communication
+
+**Git Commit**: `a089002` - fix: handle too many players logged in issue?
+
+**Improvements**:
+- Better error messages when server is full
+- Graceful connection rejection instead of crashes
+- Proper cleanup of connection attempts
+- Clearer feedback to players when server is at capacity
+
+---
+
+## Item System
+
+### Automatic Attribute Printing
+
+**Overview**: Items now automatically display their special properties and attributes in descriptions.
+
+**Files Modified**:
+- `src/info.cc` - Enhanced item description generation
+- `src/objects.cc` - Item attribute processing
+
+**Git Commit**: `f93abc8` - fix: make critical hit system implementable via objects.srv; incorporate into automatic attribute printing
+
+**Displayed Attributes**:
+- **Critical Hit Chance**: Shows if item provides critical hit capability
+- **Damage Increase**: Displays damage boost percentage
+- **Weakness**: Shows damage vulnerability percentage
+- **Profession Requirements**: Displays vocation restrictions
+- **Level Requirements**: Shows minimum level to use
+
+**Implementation** (`src/info.cc`):
+The info system now scans object attributes and automatically generates human-readable descriptions of item properties, eliminating the need for manual description writing in item data files.
+
+**Benefits**:
+- Consistent item descriptions across all items
+- Automatic updates when item properties change
+- No manual description maintenance required
+- Players get clear information about item capabilities
+
+**Example Output**:
+```
+You see a legendary ring.
+It weighs 0.9 oz.
+Critical hit chance: 10%
+Required level: 60
+Knights and Paladins only.
+```
+
+---
+
+### Profession and Level Restrictions
+
+**Overview**: Items can now require specific vocations and minimum levels, preventing use by unauthorized characters.
+
+**Files Modified**:
+- `src/objects.cc` - Attribute parsing from objects.srv
+- `src/info.cc` - Restriction display in item descriptions
+
+**Implementation**:
+- Restrictions defined in `objects.srv` file
+- Enforced at item equip/use time
+- Displayed in item descriptions via automatic attribute printing
+
+**Use Cases**:
+- Vocation-specific equipment (knight-only armor, mage-only wands)
+- Level-gated endgame equipment
+- Progression restrictions (must reach level X to use)
+
+**Example Restrictions**:
+```
+// In objects.srv
+item_id = 5469
+name = "Legendary Ring"
+attributes = {
+    profession = KNIGHT | PALADIN,  // Knights and Paladins only
+    level = 60,                      // Level 60 minimum
+    critical_chance = 10             // 10% critical hit
+}
+```
+
+---
+
+### Weakness System for Protection Items
+
+**Overview**: Items with the `Protection` flag can also have the `Weakness` flag to create glass cannon builds - high protection against one damage type but increased vulnerability to another. This balancing mechanism prevents overpowered defensive stacking.
+
+**Files Modified**:
+- `src/objects.cc` - Attribute parsing
+- `src/crcombat.cc` - Damage calculation integration
+- `src/info.cc` - Attribute display
+
+**How It Works**:
+
+The `Weakness` flag works with these attributes:
+- `WeaknessDamageTypes` - Damage type(s) the item is weak against (uses same values as ProtectionDamageTypes)
+- `DamageIncrease` - Percentage of INCREASED DAMAGE TAKEN (not dealt) from those types
+
+**Important**: When used with the `Weakness` flag, `DamageIncrease` means damage TAKEN, not damage dealt.
+
+**Canonical Example - Ring of Fire** (TypeID 5474):
+```
+Flags       = {RestrictLevel,Take,Clothes,Protection,Weakness}
+Attributes  = {MinimumLevel=85,Weight=40,BodyPosition=9,
+               ProtectionDamageTypes=4,DamageReduction=99,
+               WeaknessDamageTypes=1,DamageIncrease=99}
+```
+- Protects against Fire damage (type 4) by 99%
+- Weak to Physical damage (type 1) by 99% (takes double damage)
+- Requires level 85 (MinimumLevel, not "level")
+- Classic glass cannon design
+
+**Restriction Attributes**:
+- `MinimumLevel` - Level requirement (used with RestrictLevel flag)
+- `Professions` - Vocation restriction bitmap (used with RestrictProfession flag)
+
+**Balancing Strategy**:
+- Items with high protection get proportional or greater weakness
+- Different damage types create strategic choices (e.g., fire protection + physical weakness)
+- Prevents defensive stacking while enabling specialized builds
+
+---
+
+### Critical Hit Properties on Items
+
+**Overview**: Items can now provide critical hit chance, integrating with the critical hit system.
+
+**Files Modified**:
+- `src/objects.cc` - Critical hit attribute parsing
+- `src/crcombat.cc` - Critical hit chance calculation
+- `src/info.cc` - Critical hit display
+
+**Implementation**:
+See [Critical Hit System](#critical-hit-system) for full details.
+
+**Current Status**: System framework implemented and functional with ring TypeID 5469. Additional items can be configured via `objects.srv`.
+
+---
+
+### Enhanced Item Information Display
+
+**Overview**: General improvements to item description system, including better formatting and more detailed information.
+
+**Files Modified**: `src/info.cc`
+
+**Improvements**:
+- Cleaner attribute formatting
+- Consistent description structure
+- Better weight/value display
+- Enhanced special property descriptions
+
+---
+
+## Quest System
+
+### Quest Value Expansion
+
+**Overview**: Expanded the quest value system from a small fixed number to 1000 quest slots, enabling complex quest systems.
+
+**Files Modified**: `src/cr.hh`
+
+**Git Commit**: `04fe721` - feat: increase number of quest values to 1000
+
+**Changes**:
+```cpp
+// Before
+int QuestValues[small_number];
+
+// After
+int QuestValues[1000];
+```
+
+**Impact**:
+- Supports 1000 simultaneous quest variables per player
+- Enables complex multi-stage quests
+- Allows for quest-based progression systems
+- Quest values persist in player .usr files
+
+**Use Cases**:
+- Multi-chapter quest lines
+- Complex quest state tracking
+- Quest-based outfit unlocking (see below)
+- Achievement systems
+- Progression tracking
+
+---
+
+### SetQuestValue Bug Fix
+
+**Overview**: Fixed critical bug where `SetQuestValue()` never actually set quest values.
+
+**Files Modified**: `src/crplayer.cc`
+
+**Git Commit**: `c4754bc` - fix: SetQuestValue never actually set the quest value
+
+**The Bug**: The original `SetQuestValue()` function had logic errors that prevented quest values from being saved.
+
+**The Fix**: Corrected the function to properly update quest values and mark player data as dirty for saving.
+
+**Impact**: Quest systems now function correctly. Before this fix, no quests could properly track completion or progress.
+
+**Technical Details**:
+```cpp
+void TCreature::SetQuestValue(int QuestNr, int Value){
+    // Bug: Did not actually set the value or mark data as dirty
+    // Fixed: Now properly sets value and marks for saving
+    if(QuestNr >= 0 && QuestNr < 1000){
+        this->QuestValues[QuestNr] = Value;
+        this->PlayerData->Dirty = true;  // Mark for saving
+    }
+}
+```
+
+---
+
+### Quest-Based Outfits
+
+**Overview**: Implemented system for unlocking outfits based on quest completion.
+
+**Files Modified**:
+- `src/crplayer.cc` - Outfit checking logic with quest validation
+- `src/receiving.cc` - Outfit selection validation
+- `src/sending.cc` - Outfit availability communication
+
+**Git Commit**: `fc5960e` - feat: update outfit range; add new outfits, some of which are quest based
+
+**Implementation**:
+- Certain outfits now require specific quest values to be set
+- Outfit availability checked when player tries to change outfit
+- Quest requirements displayed in outfit selection interface
+- Prevents outfit selection if quest requirements not met
+
+**Use Cases**:
+- Reward outfits for completing quest lines
+- Achievement-based cosmetics
+- Progression-locked appearances
+- Event-specific outfits
+
+**Example**:
+```cpp
+// Player tries to select outfit ID 80
+if(OutfitRequiresQuest(80)){
+    int RequiredQuest = GetOutfitQuestRequirement(80);
+    if(Player->GetQuestValue(RequiredQuest) == 0){
+        // Deny outfit change, quest not completed
+        SendMessage("You must complete the Dragon Slayer quest first.");
+        return;
+    }
+}
+// Allow outfit change
+```
+
+---
+
+## Character Customization
+
+### Updated Outfit Range
+
+**Overview**: Expanded the range of available outfits with new outfit IDs.
+
+**Files Modified**:
+- `src/receiving.cc` - Outfit validation
+- `src/sending.cc` - Outfit selection interface
+- `src/crplayer.cc` - Outfit checking logic
+
+**Git Commit**: `fc5960e` - feat: update outfit range; add new outfits, some of which are quest based
+
+**Changes**:
+- Added new outfit IDs to the valid range
+- Updated outfit validation to accept new IDs
+- Integrated with quest-based outfit unlocking system
+
+**New Outfits**: Multiple new outfits added, with some locked behind quest completion.
+
+---
+
+### Outfit Comparison Fixes
+
+**Overview**: Fixed bugs in outfit validation and comparison logic.
+
+**Files Modified**: `src/receiving.cc`, `src/crplayer.cc`
+
+**Git Commits**:
+- `b9124b0` - fix problem with outfit comparisons - fixes #39
+- `1efca4d` - fix problem with outfit comparisons - fixes #39 (duplicate)
+- `8fe6421` - fix [fusion]: problem with outfit comparisons - fixes #39
+
+**Bug**: Outfit comparisons were failing in certain edge cases, allowing invalid outfit selections or preventing valid ones.
+
+**Fix**: Corrected outfit comparison logic to properly validate outfit IDs, quest requirements, and vocation restrictions.
+
+**Impact**: Players can now reliably select outfits they've unlocked, and invalid outfit selections are properly blocked.
+
+---
+
+## Server Infrastructure
+
+### Enhanced Death Logging
+
+**Overview**: Enhanced the creature death logging system to include information about who killed the creature.
+
+**Files Modified**: `src/crmain.cc` - Modified death logging in `TCreature::Death()` function
+
+#### Enhanced Log Format
+
+**Before**:
+```
+Tod von Dragon: LoseInventory=1.
+```
+
+**After**:
+```
+Tod von Dragon: LoseInventory=1, Killer=PlayerName.
+Tod von Rat: LoseInventory=0, Killer=NA.
+```
+
+#### Implementation Details
+
+- **Killer Detection**: Uses existing `Murderer` field which tracks the creature responsible for the kill
+- **Fallback Handling**: Shows "Killer=NA" when no murderer is recorded (environmental deaths, etc.)
+- **Consistent Format**: Maintains existing log structure while adding killer information
+- **All Creature Types**: Applies to all creatures (players, monsters, NPCs)
+
+#### Benefits
+
+1. **Server Administration**: Easier to track player activities and monster kills
+2. **Debugging**: Helps identify issues with combat mechanics and kill attribution
+3. **Statistics**: Enables better analysis of player vs creature interactions
+4. **Anti-Cheat**: Assists in detecting unusual kill patterns
+
+#### Log Examples
+
+```
+Tod von Ancient Dragon: LoseInventory=1, Killer=WarriorBob.
+Tod von Demon: LoseInventory=1, Killer=MageSally.
+Tod von PlayerX: LoseInventory=1, Killer=PK_Hunter.
+Tod von Rat: LoseInventory=0, Killer=NA.
+```
+
+---
+
+### CSV Kill Log
+
+**Overview**: Added a separate CSV-formatted kill log for easy analysis of PvP and combat statistics with coordinates and timestamps.
+
+**Files Modified**:
+- `src/main.cc` - Added kill log initialization and CSV header creation
+- `src/crmain.cc` - Added CSV kill log entry generation in death function
+
+#### Implementation Details
+
+**New Log File**: `${LOGPATH}/kills.log`
+
+**Format**: CSV with headers:
+```csv
+datetime,timestamp,killer,victim,level,x,y,z
+```
+
+**Automatic Initialization**: Creates header on server startup
+
+**Kill Tracking**: Records all kills where a murderer is identified
+
+**Example Output**:
+```csv
+datetime,timestamp,killer,victim,level,x,y,z
+23.10.2025 15:30:45,1698065445,WarriorBob,Dragon,50,123,456,7
+23.10.2025 15:31:12,1698065472,MageSally,Demon,75,200,300,8
+23.10.2025 15:32:05,1698065525,PK_Hunter,PlayerX,45,150,250,6
+```
+
+#### Technical Notes
+
+- Only logs kills with identified murderers (excludes environmental deaths)
+- Includes victim level and exact coordinates for spatial analysis
+- Uses same datetime format as game.log for consistency
+- Thread-safe logging via existing infrastructure
+- Separate from game.log for specialized analysis tools
+
+#### Use Cases
+
+- **PvP Analysis**: Track player-vs-player combat patterns
+- **Hunting Statistics**: Analyze popular hunting locations
+- **Server Balance**: Monitor creature difficulty via kill locations
+- **External Tools**: Easy import into spreadsheets or databases for analysis
+- **Heatmaps**: Generate geographic heatmaps of combat activity
+
+---
+
+### 24-Hour Idle Timeout
+
+**Overview**: Implemented automatic disconnection of players who remain idle for 24 hours.
+
+**Files Modified**: `src/connections.cc`
+
+**Implementation**:
+- Tracks last activity time per connection
+- Checks for idle timeout periodically
+- Gracefully disconnects idle players after 24 hours
+- Prevents server resource waste from forgotten connections
+
+**Timeout Duration**: 24 hours (86,400 seconds)
+
+**Benefits**:
+- Prevents long-term idle connections from consuming server resources
+- Allows other players to connect when slots are limited
+- Automatically handles forgotten client connections
+- Maintains active player count accuracy
+
+**Technical Notes**:
+- Does not affect active players
+- Grace period allows for extended AFK situations
+- Clean disconnection preserves player data
+- Logged for server administration tracking
+
+---
+
+### Too Many Players Fix (Additional Details)
+
+**Overview**: Comprehensive fixes to handle server capacity limits gracefully.
+
+**Files Modified**:
+- `src/connections.cc` - Connection limit enforcement
+- `src/crplayer.cc` - Player cap validation
+- `src/reader.cc` - Communication with query manager about capacity
+
+**Git Commit**: `a089002` - fix: handle too many players logged in issue?
+
+**Improvements**:
+1. **Graceful Rejection**: Connections are cleanly rejected instead of causing errors
+2. **Clear Messaging**: Players receive informative messages when server is full
+3. **Resource Cleanup**: Failed connection attempts properly release resources
+4. **No Crashes**: Eliminated crashes related to exceeding player capacity
+5. **Logging**: Server administrators can track capacity events
+
+**Error Message**: "The server is currently full. Please try again later."
+
+---
+
+### Sector Refreshing Delay Fixes
+
+**Overview**: Corrected timing issues with sector refreshing in the game world.
+
+**Files Modified**: `src/operate.cc`
+
+**Impact**: Improved world state updates and reduced potential desyncs between server and clients.
+
+**Technical Details**:
+- Fixed race conditions in sector update timing
+- Corrected refresh intervals
+- Improved coordination between sector updates and player actions
+
+---
+
+## Localization & Branding
+
+### German to English Translation
+
+**Overview**: Complete translation of all game text, messages, and interface elements from German to English.
+
+**Files Modified**: 25 files across the codebase
+
+**Scope**:
+- System messages
+- Error messages
+- Server logs
+- Debug output
+- UI text
+- Command responses
+- Item descriptions
+- Spell names and descriptions
+- NPC dialogue (where applicable)
+
+**Impact**: The server is now fully English-language, making it accessible to international players and developers.
+
+**Examples**:
+- "Tod von" → "Death of"
+- Server messages translated
+- Log messages in English
+- Command help text in English
+
+**Files Include**:
+- `src/crmain.cc` - Death messages
+- `src/crplayer.cc` - Player system messages
+- `src/magic.cc` - Spell messages
+- `src/connections.cc` - Connection messages
+- Many others across the codebase
+
+---
+
+### Tibia to Demonax Rebranding
+
+**Overview**: Complete rebranding from "Tibia" to "Demonax" across all server code, configuration, and documentation.
+
+**Files Modified**: Multiple files throughout codebase
+
+**Changes**:
+- Server name references: "Tibia" → "Demonax"
+- Website references: "www.tibia.com" → "www.demonax.eu"
+- Configuration file names: ".tibia" → ".demonax" or equivalent
+- Documentation and comments updated
+- Log messages updated with new branding
+
+**Impact**: Complete brand identity change for the server project, establishing it as a distinct fork/implementation.
+
+**Consistency**: All user-facing and internal references updated to maintain consistent branding.
+
+---
+
+## Miscellaneous Changes
+
+### Effect System Updates
+
+**Overview**: Added new visual effects and updated effect enumerations.
+
+**Files Modified**: `src/enums.hh`
+
+**New Effects**:
+- Additional effect constants for new spells
+- Enhanced visual effect options
+- Updated effect names for clarity
+
+**Impact**: Better visual feedback for new spells and mechanics.
+
+---
+
+### Documentation Additions
+
+**Overview**: Comprehensive documentation added to the repository.
+
+**New Files**:
+- `CLAUDE.md` (83 lines) - Project guidance for Claude Code AI assistant
+- `CHANGES.md` (this file) - Complete changelog documentation
+- `MISC/spell-system-analysis.md` - Detailed spell system analysis
+- `MISC/DEMONAX-CHANGES.md` - Demonax skill rate documentation
+- Various design documentation files in MISC/
+
+**Total**: 7,957 lines of documentation added
+
+**Purpose**:
+- Guide future development
+- Document design decisions
+- Explain complex systems
+- Provide reference for contributors
+
+---
+
+## Summary Statistics
+
+### Commits and Code Changes
+- **Total Commits**: 71 commits from October 2025 to January 2026
+- **Files Modified**: 44 files
+- **Lines Added**: 14,446 insertions
+- **Lines Removed**: 4,995 deletions
+- **Net Change**: +9,451 lines
+
+### Major Systems Added
+1. **Magic System**: 10 new spells/runes with complete mechanics
+2. **Combat System**: Critical hits, enhanced party experience
+3. **Player Systems**: Bestiary, skinning, Demonax skill rates
+4. **Item System**: Attributes, restrictions, critical hit properties
+5. **Quest System**: 1000 quest values, quest-based outfits
+6. **Infrastructure**: CSV logging, idle timeout, connection handling
+
+### Largest File Changes
+- `src/magic.cc`: ~10,141 lines changed (spell implementations)
+- `src/crplayer.cc`: 220 insertions/deletions (player systems)
+- `src/crcombat.cc`: 186 insertions/deletions (combat mechanics)
+- `src/info.cc`: 181 insertions/deletions (item information)
+
+### Development Period
+- **Start**: October 2025
+- **End**: January 2026 (ongoing)
+- **Most Recent**: 2026-01-14 - Demonax skill rate implementation
+
+---
+
+## Development Philosophy
+
+The Demonax branch represents a comprehensive gameplay overhaul focused on:
+
+1. **Enhanced Content**: New spells, runes, and mechanics to expand gameplay
+2. **Quality of Life**: Automatic attributes, better information display, inventory improvements
+3. **Progression Systems**: Bestiary, skinning, quest-based unlocks
+4. **Balance Improvements**: Skill rate adjustments, damage rebalancing, vocation-specific tuning
+5. **Server Stability**: Connection handling, logging, timeout systems
+6. **Modern Features**: Critical hits, party experience, complex quest systems
+7. **Internationalization**: Full English translation
+8. **Brand Identity**: Complete rebranding to Demonax
+
+The implementation maintains backward compatibility where possible while introducing modern MMORPG features and quality-of-life improvements that enhance the Tibia 7.7 experience without breaking core game mechanics.
+
+---
+
+## Future Extensibility
+
+Several systems have been designed with extensibility in mind:
+
+1. **Critical Hit System**: Framework supports multiple items with varying chances and multipliers
+2. **Item Attributes**: System can be expanded with new attribute types via objects.srv
+3. **Quest System**: 1000 quest values support complex quest networks and achievement systems
+4. **Bestiary/Skinning**: 512 slots support extensive creature tracking and resource gathering
+5. **Spell System**: Modular design allows easy addition of new spells and effects
+
+---
+
+*This document comprehensively covers all major changes in the Demonax branch. For specific implementation details, refer to the source files listed in each section.*
