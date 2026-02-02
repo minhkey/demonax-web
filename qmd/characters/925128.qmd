@@ -1,0 +1,272 @@
+---
+title: "Redditsnubben"
+format: html
+---
+
+```{r}
+#| include: false
+#| warning: false
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+# Single database connection for all data queries
+con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+
+# Read all necessary tables
+players <- dbReadTable(con, "players")
+daily_snapshots <- dbReadTable(con, "daily_snapshots")
+daily_quests <- dbReadTable(con, "daily_quests")
+daily_bestiary <- dbReadTable(con, "daily_bestiary")
+daily_harvesting <- dbReadTable(con, "daily_harvesting")
+creatures <- dbReadTable(con, "creatures")
+quests_db <- dbReadTable(con, "quests")
+
+# Close the database connection
+DBI::dbDisconnect(con)
+
+# Get latest snapshot date for this player
+latest_snapshot <- daily_snapshots |>
+  filter(player_id == 925128) |>
+  filter(snapshot_date == max(snapshot_date))
+
+# Query 1: Player base data with latest snapshot
+player <- players |>
+  filter(id == 925128) |>
+  left_join(latest_snapshot, by = c("id" = "player_id")) |>
+  select(id, name, first_seen, last_seen, level, experience, magic_level,
+         fist_fighting, club_fighting, sword_fighting, axe_fighting,
+         distance_fighting, shielding, fishing)
+
+# Query 2: Quests data - only show fully completed quests
+# Get quest names where all IDs are completed
+quest_completion_check <- daily_quests |>
+  filter(snapshot_id %in% latest_snapshot$id) |>
+  left_join(quests_db, by = c("quest_id" = "id")) |>
+  group_by(name) |>
+  summarize(completed_ids = n(), .groups = "drop") |>
+  left_join(
+    quests_db |> group_by(name) |> summarize(total_ids = n(), .groups = "drop"),
+    by = "name"
+  ) |>
+  filter(completed_ids == total_ids) |>
+  pull(name)
+
+quest_data_raw <- daily_quests |>
+  filter(snapshot_id %in% latest_snapshot$id) |>
+  left_join(quests_db, by = c("quest_id" = "id")) |>
+  filter(name %in% quest_completion_check) |>
+  group_by(name) |>
+  summarize(completion_count = first(completion_count), .groups = "drop") |>
+  arrange(desc(completion_count))
+
+# Query 3: Bestiary data (raw for rank calculation)
+bestiary_data_raw <- daily_bestiary |>
+  filter(snapshot_id %in% latest_snapshot$id) |>
+  left_join(creatures, by = c("monster_id" = "race")) |>
+  select(creature_name = name, creature_race = monster_id, kill_count) |>
+  arrange(desc(kill_count))
+
+# Query 4: Harvesting data (raw for rank calculation)
+harvesting_data_raw <- daily_harvesting |>
+  filter(snapshot_id %in% latest_snapshot$id) |>
+  left_join(creatures, by = c("race_id" = "race")) |>
+  select(creature_name = name, harvest_count) |>
+  arrange(desc(harvest_count))
+
+# Process data after disconnect
+# Read quest CSV for names and descriptions
+quest_names <- read.csv("../../asset/csv/quest.csv")
+quest_data <- quest_data_raw |>
+  dplyr::left_join(
+    quest_names |>
+      group_by(quest_name) |>
+      summarize(
+        quest_legend = first(quest_legend),
+        level_rec = first(level_rec),
+        .groups = "drop"
+      ),
+    by = c("name" = "quest_name")
+  ) |>
+  dplyr::select('Quest' = name, Description = quest_legend)
+
+# Bestiary data with rank calculation and image
+bestiary_data <- bestiary_data_raw |>
+  dplyr::mutate(
+    creature_slug = gsub("^_|_$", "", gsub("[^a-z0-9]+", "_", tolower(creature_name))),
+    Image = paste0('<img src="../../asset/img/outfit/', creature_race, '.png" width="32" height="32" />'),
+    Creature = paste0(
+      '<a href="/qmd/creatures/', creature_slug, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      tools::toTitleCase(creature_name),
+      '</a>'
+    ),
+    Kills = kill_count,
+    Rank = dplyr::case_when(
+      kill_count >= 10000 ~ "Grand Bloodmarshal",
+      kill_count >= 5000 ~ "Deathwarden",
+      kill_count >= 1000 ~ "Gorelord",
+      kill_count >= 500 ~ "Distinguished Executioner",
+      kill_count >= 100 ~ "Butcher of Beasts",
+      kill_count >= 50 ~ "Swift Hunter",
+      kill_count >= 10 ~ "Preyseeker",
+      kill_count >= 1 ~ "Initiated",
+      TRUE ~ ""
+    )
+  ) |>
+  dplyr::select(Image, Creature, Kills, Rank)
+
+# Harvesting data with rank calculation
+harvesting_data <- harvesting_data_raw |>
+  dplyr::mutate(
+    Creature = tools::toTitleCase(creature_name),
+    Count = harvest_count,
+    Rank = dplyr::case_when(
+      harvest_count >= 10000 ~ "Architect of Flesh and Bone",
+      harvest_count >= 5000 ~ "Bringer of the Bloodbath",
+      harvest_count >= 1000 ~ "Master Flayer",
+      harvest_count >= 500 ~ "Deliberate Flesh-Peeler",
+      harvest_count >= 100 ~ "Brutal Skullcracker",
+      harvest_count >= 50 ~ "Sluggish Bonebreaker",
+      harvest_count >= 10 ~ "Amateur Meatcutter",
+      harvest_count >= 1 ~ "First Cut",
+      TRUE ~ ""
+    )
+  ) |>
+  dplyr::select(Creature, Count, Rank)
+
+# Achievements data (empty for now)
+achievements_data <- data.frame(
+  'Achievement' = character(),
+  'Description' = character(),
+  'Date Earned' = character(),
+  check.names = FALSE
+)
+
+# Create the profile data for the table
+profile_data <- data.frame(
+  Field = c("Name", "Last seen", "Level", "Experience", "Completed quests", "Total bestiary kills", "Unique bestiary kills", "Magic level",
+            "Fist fighting", "Club fighting", "Sword fighting", "Axe fighting",
+            "Distance fighting", "Shielding", "Fishing"),
+  Value = c(
+    player$name,
+    as.character(player$last_seen),
+    as.character(player$level),
+    format(player$experience, big.mark = ","),
+    as.character(length(quest_data)),
+    format(sum(bestiary_data_raw$kill_count), big.mark = ","),
+    as.character(length(unique(bestiary_data_raw$creature_name))),
+    as.character(player$magic_level),
+    as.character(player$fist_fighting),
+    as.character(player$club_fighting),
+    as.character(player$sword_fighting),
+    as.character(player$axe_fighting),
+    as.character(player$distance_fighting),
+    as.character(player$shielding),
+    as.character(player$fishing)
+  )
+)
+```
+
+<div style="margin-bottom: 1.5rem;">
+  <a href="/qmd/community/characters.html"
+     id="back-link"
+     style="color: #cfa600; text-decoration: none; font-weight: 500; font-size: 1rem;"
+     onclick="handleBack(event)">
+    ← Back
+  </a>
+</div>
+
+<script>
+function handleBack(event) {
+  const referrer = document.referrer;
+  const currentHost = window.location.host;
+
+  if (referrer && referrer.includes(currentHost)) {
+    event.preventDefault();
+    window.history.back();
+  }
+}
+</script>
+
+::: {.character-profile}
+::: {.profile-container}
+::: {.profile-photo}
+![](../../asset/img/eq/925128.png)
+:::
+
+::: {.profile-info}
+```{r}
+#| echo: false
+knitr::kable(profile_data,
+      col.names = NULL,
+      escape = FALSE,
+      format = "html",
+      table.attr = 'class="profile-table"') |>
+  kableExtra::kable_styling(full_width = TRUE) |>
+  kableExtra::column_spec(1, bold = TRUE)
+```
+:::
+:::
+:::
+
+::: {.panel-tabset}
+
+### Questlog
+
+```{r}
+#| echo: false
+#| warning: false
+
+DT::datatable(quest_data,
+          options = list(pageLength = 25, searching = FALSE),
+          rownames = FALSE)
+```
+
+### Bestiary
+
+```{r}
+#| echo: false
+#| warning: false
+
+DT::datatable(bestiary_data,
+          options = list(pageLength = 25, searching = FALSE,
+                        columnDefs = list(
+                          list(className = 'dt-left', targets = 0:3)
+                        )),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Successful harvesting
+
+```{r}
+#| echo: false
+#| warning: false
+
+DT::datatable(harvesting_data,
+          options = list(pageLength = 10, searching = FALSE,
+                        columnDefs = list(
+                          list(className = 'dt-left', targets = 0:2)
+                        )),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Achievements
+
+```{r}
+#| echo: false
+#| warning: false
+
+if (nrow(achievements_data) > 0) {
+  DT::datatable(achievements_data,
+            options = list(pageLength = 10, searching = FALSE),
+            rownames = FALSE)
+} else {
+  cat("No achievements recorded yet.")
+}
+```
+
+:::

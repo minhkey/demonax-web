@@ -1,0 +1,145 @@
+---
+title: "Library - Creatures"
+format: html
+---
+
+```{r}
+#| warning: false
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+# Connect to database
+con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+
+# Read tables
+creatures <- dbReadTable(con, "creatures")
+creature_loot <- dbReadTable(con, "creature_loot")
+items <- dbReadTable(con, "items")
+item_prices <- dbReadTable(con, "item_prices")
+
+DBI::dbDisconnect(con)
+
+# Get available outfit images to avoid 404s
+outfit_files <- list.files("../../asset/img/outfit", pattern = "^[0-9]+\\.png$")
+available_outfits <- as.integer(gsub("\\.png$", "", outfit_files))
+
+# Hardcoded currency values for coins
+currency_prices <- data.frame(
+  item_id = c(3031, 3035, 3043),
+  name = c("Gold Coin", "Platinum Coin", "Crystal Coin"),
+  currency_price = c(1, 100, 10000)
+)
+
+# Calculate average loot value for each creature
+creature_avg_values <- creature_loot |>
+  left_join(items, by = c("item_id" = "type_id")) |>
+  left_join(
+    item_prices |>
+      filter(mode == "sell") |>
+      group_by(item_id) |>
+      summarize(price = max(price)),
+    by = "item_id"
+  ) |>
+  left_join(currency_prices |> select(item_id, currency_price), by = "item_id") |>
+  mutate(
+    final_price = coalesce(currency_price, price, 0),
+    avg_amount = (min_amount + max_amount) / 2,
+    avg_value = avg_amount * final_price * (chance_percent / 100)
+  ) |>
+  group_by(creature_id) |>
+  summarize(total_avg_value = sum(avg_value, na.rm = TRUE))
+
+# Query creature data with loot values
+creature_data <- creatures |>
+  left_join(creature_avg_values, by = c("id" = "creature_id")) |>
+  mutate(
+    total_avg_value = coalesce(total_avg_value, 0),
+    avg_value_per_exp = ifelse(experience > 0, total_avg_value / experience, 0),
+    avg_value_per_hp = ifelse(hp > 0, total_avg_value / hp, 0),
+    # Calculate creature type based on article field
+    # Regular creatures have "a" or "an", Bosses have empty string or NULL
+    creature_type = if_else(article != "" & !is.na(article), "Regular", "Boss")
+  ) |>
+  select(name, race, hp, experience, article, creature_type, total_avg_value, avg_value_per_exp, avg_value_per_hp) |>
+  arrange(desc(experience), name)
+
+# Create slug and links
+creature_data <- creature_data |>
+  mutate(
+    slug = gsub("[^a-z0-9]+", "_", tolower(name)),
+    slug = gsub("^_|_$", "", slug),
+    # Convert name to sentence case (capitalize first letter of each word)
+    display_name = tools::toTitleCase(name),
+    # Only show image if outfit file exists, otherwise use placeholder
+    Image = ifelse(
+      race %in% available_outfits,
+      paste0('<img src="../../asset/img/outfit/', race, '.png" width="32" height="32">'),
+      '<span style="display:inline-block;width:32px;height:32px;background:#e0e0e0;border-radius:3px;"></span>'
+    ),
+    Creature = paste0(
+      '<a href="/qmd/creatures/',
+      slug,
+      '.html" style="color: #004294; text-decoration: none; font-weight: 500;">',
+      display_name,
+      '</a>'
+    ),
+    HP = format(hp, big.mark = ","),
+    Experience = format(experience, big.mark = ","),
+    `Avg. value` = paste0(format(round(total_avg_value), big.mark = ","), " gp"),
+    `Avg. value per exp` = paste0(format(round(avg_value_per_exp, 3), nsmall = 3), " gp"),
+    `Avg. value per HP` = paste0(format(round(avg_value_per_hp, 3), nsmall = 3), " gp")
+  )
+
+# Split into regular and boss creatures
+regular_creatures <- creature_data |>
+  filter(creature_type == "Regular") |>
+  select(Image, Creature, HP, Experience, `Avg. value`, `Avg. value per HP`, `Avg. value per exp`)
+
+boss_creatures <- creature_data |>
+  filter(creature_type == "Boss") |>
+  select(Image, Creature, HP, Experience, `Avg. value`, `Avg. value per HP`, `Avg. value per exp`)
+```
+
+::: {.panel-tabset}
+
+### Regular
+
+```{r}
+#| echo: false
+#| warning: false
+
+DT::datatable(regular_creatures,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE,
+            columnDefs = list(
+              list(width = '50px', targets = 0)  # Image column
+            )
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Bosses
+
+```{r}
+#| echo: false
+#| warning: false
+
+DT::datatable(boss_creatures,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE,
+            columnDefs = list(
+              list(width = '50px', targets = 0)  # Image column
+            )
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+:::

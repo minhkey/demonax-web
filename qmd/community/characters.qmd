@@ -1,0 +1,73 @@
+---
+title: "Community - Characters"
+format: html
+---
+
+```{r}
+#| warning: false
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+# Connect to database
+con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+
+# Read tables
+players <- dbReadTable(con, "players")
+daily_snapshots <- dbReadTable(con, "daily_snapshots")
+daily_bestiary <- dbReadTable(con, "daily_bestiary")
+
+DBI::dbDisconnect(con)
+
+# Get latest snapshot for each player
+latest_snapshots <- daily_snapshots |>
+  group_by(player_id) |>
+  filter(snapshot_date == max(snapshot_date)) |>
+  ungroup()
+
+# Calculate bestiary statistics
+bestiary_stats <- daily_bestiary |>
+  inner_join(latest_snapshots, by = c("snapshot_id" = "id")) |>
+  group_by(player_id) |>
+  summarize(
+    unique_creatures = n_distinct(monster_id),
+    total_kills = sum(kill_count),
+    .groups = "drop"
+  )
+
+# Join player data with latest snapshots and bestiary stats
+people_data <- players |>
+  filter(!id %in% c(100001, 100004)) |>
+  left_join(latest_snapshots, by = c("id" = "player_id")) |>
+  left_join(bestiary_stats, by = c("id" = "player_id")) |>
+  select(id, name, level, experience, magic_level, last_seen, unique_creatures, total_kills) |>
+  arrange(desc(level), desc(experience))
+
+# Create clickable name links pointing to player profiles
+people_data <- people_data |>
+  mutate(
+    Name = paste0(
+      '<a href="/qmd/characters/',
+      id,
+      '.html" style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    Experience = format(experience, big.mark = ","),
+    `Last Seen` = last_seen
+  ) |>
+  select(Name, `Last Seen`, Level, Experience)
+
+# Create interactive table
+DT::datatable(people_data,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE
+          ),
+          rownames = FALSE,
+          escape = FALSE, 
+          caption = "Characters")
+```

@@ -1,0 +1,128 @@
+---
+title: "Community - Bestiary"
+format: html
+---
+
+::: {.panel-tabset}
+
+### Total kills
+
+```{r}
+#| warning: false
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+players <- dbReadTable(con, "players")
+daily_snapshots <- dbReadTable(con, "daily_snapshots")
+daily_bestiary <- dbReadTable(con, "daily_bestiary")
+creatures <- dbReadTable(con, "creatures")
+DBI::dbDisconnect(con)
+
+# Get latest snapshot date
+latest_date <- max(daily_snapshots$snapshot_date)
+
+# Get latest snapshots
+latest_snapshots <- daily_snapshots |>
+  filter(snapshot_date == latest_date)
+
+# Get kill counts aggregated by creature
+# First get total kills per creature
+creature_totals <- daily_bestiary |>
+  inner_join(latest_snapshots, by = c("snapshot_id" = "id")) |>
+  filter(!player_id %in% c(100001, 100004)) |>
+  left_join(creatures, by = c("monster_id" = "race")) |>
+  group_by(monster_id, creature_name = name) |>
+  summarize(total_kills = sum(kill_count), .groups = "drop")
+
+# Get top killer for each creature
+top_killers <- daily_bestiary |>
+  inner_join(latest_snapshots, by = c("snapshot_id" = "id")) |>
+  left_join(players, by = c("player_id" = "id")) |>
+  filter(!player_id %in% c(100001, 100004)) |>
+  group_by(monster_id) |>
+  slice_max(kill_count, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  mutate(
+    top_killer = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a> (', kill_count, ')'
+    )
+  ) |>
+  select(monster_id, top_killer)
+
+# Combine and arrange before formatting
+bestiary_lb <- creature_totals |>
+  left_join(top_killers, by = "monster_id") |>
+  arrange(desc(total_kills)) |>
+  mutate(
+    creature_slug = gsub("^_|_$", "", gsub("[^a-z0-9]+", "_", tolower(creature_name))),
+    Image = paste0('<img src="../../asset/img/outfit/', monster_id, '.png" width="32" height="32" />'),
+    Creature = paste0(
+      '<a href="/qmd/creatures/', creature_slug, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      tools::toTitleCase(creature_name),
+      '</a>'
+    ),
+    `Total kills` = format(total_kills, big.mark = ","),
+    `Leader (Total kills)` = top_killer
+  ) |>
+  select(Image, Creature, `Total kills`, `Leader (Total kills)`)
+
+DT::datatable(bestiary_lb,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Leaderboard
+
+```{r}
+#| warning: false
+
+top_hunters <- daily_bestiary |>
+  inner_join(latest_snapshots, by = c("snapshot_id" = "id")) |>
+  left_join(players, by = c("player_id" = "id")) |>
+  filter(!player_id %in% c(100001, 100004)) |>
+  group_by(player_id, name) |>
+  summarize(
+    total_kills = sum(kill_count),
+    unique_kills = n_distinct(monster_id),
+    .groups = "drop"
+  ) |>
+  arrange(desc(total_kills)) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    `Total kills` = format(total_kills, big.mark = ","),
+    `Unique kills` = unique_kills
+  ) |>
+  select(Rank, Name, `Total kills`, `Unique kills`)
+
+DT::datatable(top_hunters,
+          options = list(
+            pageLength = 20,
+            searching = FALSE,
+            ordering = TRUE,
+            columnDefs = list(
+              list(className = 'dt-left', targets = 0)  # Rank column
+            )
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+:::

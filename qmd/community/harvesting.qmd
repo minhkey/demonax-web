@@ -1,0 +1,95 @@
+---
+title: "Community - Harvesting Leaderboard"
+format: html
+---
+
+```{r}
+#| warning: false
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+players <- dbReadTable(con, "players")
+daily_snapshots <- dbReadTable(con, "daily_snapshots")
+daily_harvesting <- dbReadTable(con, "daily_harvesting")
+creatures <- dbReadTable(con, "creatures")
+DBI::dbDisconnect(con)
+
+# Get latest snapshot date
+latest_date <- max(daily_snapshots$snapshot_date)
+
+# Get latest snapshots
+latest_snapshots <- daily_snapshots |>
+  filter(snapshot_date == latest_date)
+
+# Check if there is any harvesting data
+has_data <- nrow(daily_harvesting) > 0
+
+if (has_data) {
+  # Get harvest counts by creature
+  harvesting_lb <- daily_harvesting |>
+    inner_join(latest_snapshots, by = c("snapshot_id" = "id")) |>
+    left_join(players, by = c("player_id" = "id")) |>
+    filter(!player_id %in% c(100001, 100004)) |>
+    left_join(creatures, by = c("race_id" = "race")) |>
+    select(
+      creature_name = name.y,
+      player_name = name.x,
+      harvest_count
+    ) |>
+    arrange(creature_name, desc(harvest_count)) |>
+    mutate(
+      `Creature Name` = creature_name,
+      `Player Name` = player_name,
+      `Harvest Count` = format(harvest_count, big.mark = ",")
+    ) |>
+    select(`Creature Name`, `Player Name`, `Harvest Count`)
+
+  DT::datatable(harvesting_lb,
+            options = list(
+              pageLength = 25,
+              searching = TRUE,
+              ordering = TRUE
+            ),
+            filter = 'top',
+            rownames = FALSE,
+            caption = paste("Harvesting Rankings for", latest_date))
+} else {
+  cat("No harvesting data available yet. Check back soon!")
+}
+```
+
+## Top Harvesters by Total Count
+
+```{r}
+#| warning: false
+
+if (has_data) {
+  top_harvesters <- daily_harvesting |>
+    inner_join(latest_snapshots, by = c("snapshot_id" = "id")) |>
+    left_join(players, by = c("player_id" = "id")) |>
+    filter(!player_id %in% c(100001, 100004)) |>
+    group_by(name) |>
+    summarize(
+      total_harvests = sum(harvest_count),
+      unique_creatures = n_distinct(race_id)
+    ) |>
+    arrange(desc(total_harvests)) |>
+    head(50) |>
+    mutate(
+      Rank = row_number(),
+      Name = name,
+      `Total Harvests` = format(total_harvests, big.mark = ","),
+      `Unique Creatures` = unique_creatures
+    ) |>
+    select(Rank, Name, `Total Harvests`, `Unique Creatures`)
+
+  DT::datatable(top_harvesters,
+            options = list(pageLength = 20, searching = FALSE, ordering = FALSE),
+            rownames = FALSE)
+} else {
+  cat("No harvesting statistics available yet.")
+}
+```

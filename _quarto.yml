@@ -5,19 +5,20 @@ project:
     - "*.qmd"
     - "qmd/**/*.qmd"
     - "!DEV/"
-    - "!assets/template/"
+    - "!asset/template/"
   resources:
-    - "assets/img/hero/"
-    - "assets/js/"
+    - "asset/img/"
+    - "asset/js/"
+    - "asset/style/"
 
 website:
-  title: "Data Analytics Platform"
+  title: "Demonax MMORPG"
   favicon: ""
   page-navigation: true
 
   navbar:
     background: dark
-    logo: assets/img/logo.png
+    logo: asset/img/logo.png
     title: false
     collapse-below: lg
     left:
@@ -27,26 +28,31 @@ website:
         href: qmd/about.qmd
       - text: "Help"
         href: qmd/help.qmd
-      - text: "PMX"
+      - text: "Community"
         menu:
-          - text: "People"
-            href: qmd/pmx/people.qmd
-          - text: "Usage"
-            href: qmd/pmx/usage.qmd
-          - text: "Leaderboard"
-            href: qmd/pmx/leaderboard.qmd
-      - text: "Guidance"
+          - text: "Characters"
+            href: qmd/community/characters.qmd
+          - text: "Highscores"
+            href: qmd/community/highscores.qmd
+          - text: "Bestiary"
+            href: qmd/community/bestiary.qmd
+          - text: "Harvesting"
+            href: qmd/community/harvesting.qmd
+      - text: "Library"
         menu:
-          - text: "Software"
-            href: qmd/guidance/software.qmd
-          - text: "Servers"
-            href: qmd/guidance/servers.qmd
+          - text: "Creatures"
+            href: qmd/library/creatures.qmd
+          - text: "Weapons"
+            href: qmd/library/weapons.qmd
+          - text: "Equipment"
+            href: qmd/library/equipment.qmd
+          - text: "Quests"
+            href: qmd/library/quests.qmd
+          - text: "Magic"
+            href: qmd/library/magic.qmd
           - text: "Map"
-            href: qmd/guidance/map.qmd
-          - text: "Miscellaneous"
-            href: qmd/guidance/miscellaneous.qmd
-      - text: "Statistics"
-        href: qmd/statistics.qmd
+            href: /map/index.html#32367,32239,7,3
+            
 
   page-footer:
     left: ""
@@ -56,7 +62,15 @@ website:
 format:
   html:
     theme: cosmo
+    page-layout: custom
     toc: false
     code-fold: false
     echo: false
-    css: [assets/style/styles.css, assets/style/index.css]
+    css: [asset/style/styles.css, asset/style/index.css]
+    grid:
+      body-width: 1400px
+      sidebar-width: 0px
+      margin-width: 50px
+
+execute: 
+  freeze: auto

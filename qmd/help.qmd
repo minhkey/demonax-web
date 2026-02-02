@@ -29,7 +29,7 @@ support_data <- data.frame(
                     "Varies", "Instant", "N/A", "Instant", "Instant", "N/A", "N/A"),
   Monthly_Usage = c(3421, 1876, 543, 234, 89, 2341, 876, 156, 2987, 1234, 67, 543),
   Satisfaction = c(4.7, 4.8, 4.6, 4.5, 4.8, 4.3, 4.6, 4.9, 4.7, 4.4, 4.9, 4.5)
-) %>%
+) |>
   mutate(
     Priority = case_when(
       Monthly_Usage > 2000 ~ "High",
@@ -37,7 +37,7 @@ support_data <- data.frame(
       TRUE ~ "Low"
     ),
     Satisfaction_Pct = round(Satisfaction * 20, 1)
-  ) %>%
+  ) |>
   arrange(desc(Monthly_Usage))
 
 # Create interactive table
@@ -56,13 +56,13 @@ datatable(support_data,
           ),
           filter = 'top',
           rownames = FALSE,
-          caption = "Support Resources Overview") %>%
+          caption = "Support Resources Overview") |>
   formatStyle('Priority',
               backgroundColor = styleEqual(
                 c('High', 'Medium', 'Low'),
                 c('#d4edda', '#fff3cd', '#f8d7da')
-              )) %>%
-  formatRound('Satisfaction', 1) %>%
+              )) |>
+  formatRound('Satisfaction', 1) |>
   formatPercentage('Satisfaction_Pct', 1)
 ```
 

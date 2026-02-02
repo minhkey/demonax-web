@@ -1,0 +1,285 @@
+---
+title: "Community - Highscores"
+format: html
+---
+
+::: {.panel-tabset}
+
+### Experience
+
+```{r}
+#| warning: false
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+players <- dbReadTable(con, "players")
+daily_snapshots <- dbReadTable(con, "daily_snapshots")
+DBI::dbDisconnect(con)
+
+# Get latest snapshots
+latest_snapshots <- daily_snapshots |>
+  group_by(player_id) |>
+  filter(snapshot_date == max(snapshot_date)) |>
+  ungroup() |>
+  filter(!player_id %in% c(100001, 100004))
+
+level_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, experience) |>
+  arrange(desc(level), desc(experience)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    Experience = format(experience, big.mark = ",")
+  ) |>
+  select(Rank, Name, Level, Experience)
+
+DT::datatable(level_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Magic Level
+
+```{r}
+#| warning: false
+
+ml_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, magic_level) |>
+  arrange(desc(magic_level), desc(level)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    `Magic Level` = magic_level
+  ) |>
+  select(Rank, Name, Level, `Magic Level`)
+
+DT::datatable(ml_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Axe Fighting
+
+```{r}
+#| warning: false
+
+axe_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, axe_fighting) |>
+  arrange(desc(axe_fighting), desc(level)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    `Axe Fighting` = axe_fighting
+  ) |>
+  select(Rank, Name, Level, `Axe Fighting`)
+
+DT::datatable(axe_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Sword Fighting
+
+```{r}
+#| warning: false
+
+sword_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, sword_fighting) |>
+  arrange(desc(sword_fighting), desc(level)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    `Sword Fighting` = sword_fighting
+  ) |>
+  select(Rank, Name, Level, `Sword Fighting`)
+
+DT::datatable(sword_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Club Fighting
+
+```{r}
+#| warning: false
+
+club_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, club_fighting) |>
+  arrange(desc(club_fighting), desc(level)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    `Club Fighting` = club_fighting
+  ) |>
+  select(Rank, Name, Level, `Club Fighting`)
+
+DT::datatable(club_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Distance Fighting
+
+```{r}
+#| warning: false
+
+distance_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, distance_fighting) |>
+  arrange(desc(distance_fighting), desc(level)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    `Distance Fighting` = distance_fighting
+  ) |>
+  select(Rank, Name, Level, `Distance Fighting`)
+
+DT::datatable(distance_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Shielding
+
+```{r}
+#| warning: false
+
+shield_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, shielding) |>
+  arrange(desc(shielding), desc(level)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    Shielding = shielding
+  ) |>
+  select(Rank, Name, Level, Shielding)
+
+DT::datatable(shield_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Fist Fighting
+
+```{r}
+#| warning: false
+
+fist_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, fist_fighting) |>
+  arrange(desc(fist_fighting), desc(level)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    `Fist Fighting` = fist_fighting
+  ) |>
+  select(Rank, Name, Level, `Fist Fighting`)
+
+DT::datatable(fist_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Fishing
+
+```{r}
+#| warning: false
+
+fish_lb <- latest_snapshots |>
+  left_join(players, by = c("player_id" = "id")) |>
+  select(player_id, name, level, fishing) |>
+  arrange(desc(fishing), desc(level)) |>
+  head(100) |>
+  mutate(
+    Rank = row_number(),
+    Name = paste0(
+      '<a href="/qmd/characters/', player_id, '.html" ',
+      'style="color: #004294; text-decoration: none; font-weight: 500;">',
+      name,
+      '</a>'
+    ),
+    Level = level,
+    Fishing = fishing
+  ) |>
+  select(Rank, Name, Level, Fishing)
+
+DT::datatable(fish_lb,
+          options = list(pageLength = 20, searching = TRUE, ordering = FALSE),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+:::

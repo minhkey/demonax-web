@@ -1,0 +1,126 @@
+---
+title: "Library - Magic"
+format: html
+---
+
+::: {.panel-tabset}
+
+### Instant spells
+
+```{r}
+#| warning: false
+#| echo: false
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+# Connect to database
+con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+
+spells <- dbReadTable(con, "spells")
+spell_teachers <- dbReadTable(con, "spell_teachers")
+npc_locations <- dbReadTable(con, "npc_locations")
+
+DBI::dbDisconnect(con)
+
+# Helper function to generate NPC map links (vectorized)
+generate_npc_map_link <- function(npc_name, x, y, z) {
+  mapply(function(name, x_coord, y_coord, z_coord) {
+    if (is.na(name) || is.na(x_coord) || is.na(y_coord) || is.na(z_coord)) {
+      return(name)
+    }
+    zoom <- 5
+    hash <- sprintf("#%d,%d,%d,%d?crosshair=1&npcs=1", x_coord, y_coord, z_coord, zoom)
+    url <- sprintf("/map/index.html%s", hash)
+    return(sprintf('<a href="%s" style="color: #004294; text-decoration: none; font-weight: 500;">%s</a>',
+                   url, name))
+  }, npc_name, x, y, z, USE.NAMES = FALSE)
+}
+
+# Get instant spells (is_rune = 0) with teachers
+instant_spells <- spells |>
+  filter(is_rune == 0) |>
+  filter(level > 0) |>
+  left_join(
+    spell_teachers |>
+      left_join(npc_locations, by = "npc_name") |>
+      group_by(spell_id) |>
+      summarize(
+        teachers = paste(unique(ifelse(
+          !is.na(x),
+          paste0(generate_npc_map_link(npc_name, x, y, z), " (", price, " gp)"),
+          paste0(npc_name, " (", price, " gp)")
+        )), collapse = ", "),
+        .groups = "drop"
+      ),
+    by = c("id" = "spell_id")
+  ) |>
+  mutate(
+    Name = name,
+    Words = sub("^(\\S+) (\\S+)", "\\1\\2", words),
+    Level = level,
+    `Magic level` = ifelse(is.na(magic_level), 0, magic_level),
+    Mana = mana,
+    `Soul points` = soul_points,
+    Teachers = ifelse(is.na(teachers), "", teachers)
+  ) |>
+  select(Name, Words, Level, `Magic level`, Mana, `Soul points`, Teachers) |>
+  arrange(Level, Name)
+
+DT::datatable(instant_spells,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Rune spells
+
+```{r}
+#| warning: false
+#| echo: false
+
+# Get rune spells (is_rune = 1) with teachers
+rune_spells <- spells |>
+  filter(is_rune == 1) |>
+  left_join(
+    spell_teachers |>
+      left_join(npc_locations, by = "npc_name") |>
+      group_by(spell_id) |>
+      summarize(
+        teachers = paste(unique(ifelse(
+          !is.na(x),
+          paste0(generate_npc_map_link(npc_name, x, y, z), " (", price, " gp)"),
+          paste0(npc_name, " (", price, " gp)")
+        )), collapse = ", "),
+        .groups = "drop"
+      ),
+    by = c("id" = "spell_id")
+  ) |>
+  mutate(
+    Name = name,
+    Words = sub("^(\\S+) (\\S+)", "\\1\\2", words),
+    Level = level,
+    `Magic level (to use)` = ifelse(is.na(magic_level), 0, magic_level),
+    Mana = mana,
+    Charges = ifelse(is.na(charges), 0, charges),
+    Teachers = ifelse(is.na(teachers), "", teachers)
+  ) |>
+  select(Name, Words, Level, Mana, Charges, `Magic level (to use)`, Teachers) |>
+  arrange(Level, Name)
+
+DT::datatable(rune_spells,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+:::

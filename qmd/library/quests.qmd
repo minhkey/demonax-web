@@ -1,0 +1,178 @@
+---
+title: "Library - Quests"
+format: html
+---
+
+```{r}
+#| warning: false
+#| echo: false
+
+library(DBI)
+library(RSQLite)
+library(dplyr)
+library(jsonlite)
+
+# Connect to database
+con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+
+quests <- dbReadTable(con, "quests")
+items <- dbReadTable(con, "items")
+
+DBI::dbDisconnect(con)
+
+# Generate clickable map links from chest location strings
+generate_map_link <- function(chest_location) {
+  if (is.na(chest_location) || chest_location == "" || chest_location == "NA") {
+    return("")
+  }
+
+  # Parse format: "32605,31908,3 (1018-0997-03)" or just "32605,31908,3"
+  # Extract just the coordinate part before any parenthesis
+  coords_part <- trimws(strsplit(chest_location, "\\(")[[1]][1])
+  parts <- strsplit(coords_part, ",")[[1]]
+
+  if (length(parts) != 3) {
+    # Return original string if parsing fails
+    return(chest_location)
+  }
+
+  x <- trimws(parts[1])
+  y <- trimws(parts[2])
+  z <- trimws(parts[3])
+
+  # Validate numeric
+  if (is.na(as.numeric(x)) || is.na(as.numeric(y)) || is.na(as.numeric(z))) {
+    return(chest_location)
+  }
+
+  # Default zoom level 5 (detailed view for quest chests)
+  zoom <- 5
+
+  # Generate hash for map navigation
+  hash <- sprintf("#%s,%s,%s,%d?crosshair=1&quests=1", x, y, z, zoom)
+  url <- sprintf("/map/index.html%s", hash)
+
+  # Return HTML link with "Show on map" text
+  return(sprintf('<a href="%s" style="color: #004294; text-decoration: none; font-weight: 500;">Show on map</a>',
+                 url))
+}
+
+# Read quest CSV for descriptions
+quest_csv <- read.csv("../../asset/csv/quest.csv")
+
+# Aggregate quests by name and parse rewards
+quest_summary <- quests |>
+  group_by(name) |>
+  summarize(
+    chest_locations = paste(chest_location, collapse = "; "),
+    reward_items_json_list = list(reward_items_json),
+    .groups = "drop"
+  )
+
+# Parse reward IDs for each quest
+quest_summary$all_reward_ids <- lapply(quest_summary$reward_items_json_list, function(json_list) {
+  unique(unlist(lapply(json_list, function(json_str) {
+    tryCatch(fromJSON(json_str), error = function(e) integer(0))
+  })))
+})
+
+# Get reward item names
+quest_summary$reward_items <- sapply(quest_summary$all_reward_ids, function(ids) {
+  if(length(ids) > 0) {
+    names <- items$name[items$type_id %in% ids]
+    paste(unique(names), collapse = ", ")
+  } else {
+    ""
+  }
+})
+
+# Join with CSV for descriptions
+quest_data_all <- quest_summary |>
+  left_join(
+    quest_csv |>
+      group_by(quest_name) |>
+      summarize(
+        description = first(quest_legend),
+        level_rec = first(level_rec),
+        wiki_link = first(link),
+        quest_value = first(quest_value),
+        .groups = "drop"
+      ),
+    by = c("name" = "quest_name")
+  ) |>
+  mutate(
+    Name = name,
+    Description = ifelse(is.na(description) | description == "", "", description),
+    `Recommended level` = ifelse(is.na(level_rec) | level_rec == "", "", as.character(level_rec)),
+    `Reward locations` = sapply(chest_locations, function(locs) {
+      if (is.na(locs) || locs == "") return("")
+
+      # Handle multiple locations (semicolon-separated)
+      locations <- strsplit(locs, "; ")[[1]]
+      links <- sapply(locations, generate_map_link)
+      paste(links, collapse = "; ")
+    }),
+    Rewards = reward_items,
+    `Wiki` = ifelse(is.na(wiki_link) | wiki_link == "", "",
+                         paste0('<a href="', wiki_link, '" target="_blank">Wiki</a>')),
+    quest_value = quest_value
+  )
+```
+
+::: {.panel-tabset}
+
+### Original
+
+```{r}
+#| warning: false
+#| echo: false
+
+# Filter for Original quests (quest_value <= 332)
+quest_data_original <- quest_data_all |>
+  filter(!is.na(quest_value) & quest_value <= 332) |>
+  select(Name, Description, `Recommended level`, `Reward locations`, Rewards, `Wiki`) |>
+  arrange(Name)
+
+DT::datatable(quest_data_original,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE,
+            columnDefs = list(
+              list(width = '150px', targets = 0),
+              list(width = '200px', targets = 1),
+              list(width = '80px', targets = 2)
+            )
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Demonax
+
+```{r}
+#| warning: false
+#| echo: false
+
+# Filter for Demonax quests (quest_value >= 401)
+quest_data_demonax <- quest_data_all |>
+  filter(!is.na(quest_value) & quest_value >= 401) |>
+  select(Name, Description, `Recommended level`, `Reward locations`, Rewards) |>
+  arrange(Name)
+
+DT::datatable(quest_data_demonax,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE,
+            columnDefs = list(
+              list(width = '150px', targets = 0),
+              list(width = '200px', targets = 1),
+              list(width = '80px', targets = 2)
+            )
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+:::

@@ -1,0 +1,636 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    /* Map container wrapper */
+    .map-wrapper {
+        width: 80%;
+        margin: 0 auto 2rem auto;
+    }
+    #map {
+        position: relative;
+        width: 100%;
+        height: 85vh;
+        background-color: #000000;
+    }
+    #controls {
+        position: relative;
+        width: 100%;
+        background: #0D2E2B;
+        color: #fff;
+        padding: 8px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: monospace;
+        flex-wrap: wrap;
+        font-size: 14px;
+    }
+    .control-group {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+    #controls label {
+        font-weight: bold;
+        font-size: 14px;
+    }
+    #controls select {
+        padding: 3px 6px;
+        font-family: monospace;
+        font-size: 14px;
+        background: #444;
+        color: white;
+        border: 1px solid #666;
+        border-radius: 3px;
+    }
+    #coords {
+        margin-left: auto;
+        font-size: 14px;
+    }
+    .leaflet-marker-icon.spawn-marker {
+        width: 32px !important;
+        height: 32px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: absolute !important;
+        border: none !important;
+        background: none !important;
+    }
+    .spawn-marker img {
+        max-width: 32px;
+        max-height: 32px;
+        width: auto;
+        height: auto;
+        image-rendering: pixelated;
+    }
+    .spawn-amount {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        font-weight: bold;
+        font-size: 14px;
+        pointer-events: none;
+    }
+    #controls input[type="checkbox"] {
+        cursor: pointer;
+        margin-right: 5px;
+    }
+    #crosshair {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 1000;
+        display: none;
+    }
+    #crosshair.visible {
+        display: block;
+    }
+    #crosshair line {
+        stroke: #00ff00;
+        stroke-width: 2;
+        stroke-linecap: round;
+    }
+    #copy-toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 14px;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+    }
+    #copy-toast.show {
+        opacity: 1;
+    }
+</style>
+
+<div class="map-wrapper">
+<div id="controls">
+    <div class="control-group">
+        <label for="floor-select">Floor:</label>
+        <select id="floor-select">
+        <option value="0">Sky 7 (0)</option>
+        <option value="1">Sky 6 (1)</option>
+        <option value="2">Sky 5 (2)</option>
+        <option value="3">Sky 4 (3)</option>
+        <option value="4">Sky 3 (4)</option>
+        <option value="5">Sky 2 (5)</option>
+        <option value="6">Sky 1 (6)</option>
+        <option value="7" selected>Ground (7)</option>
+        <option value="8">Underground 1 (8)</option>
+        <option value="9">Underground 2 (9)</option>
+        <option value="10">Underground 3 (10)</option>
+        <option value="11">Underground 4 (11)</option>
+        <option value="12">Underground 5 (12)</option>
+        <option value="13">Underground 6 (13)</option>
+        <option value="14">Underground 7 (14)</option>
+        <option value="15">Underground 8 (15)</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>
+            <input type="checkbox" id="spawn-toggle" />
+            Show spawns
+        </label>
+    </div>
+    <div class="control-group">
+        <label>
+            <input type="checkbox" id="questchest-toggle" />
+            Show quest locations
+        </label>
+    </div>
+    <div class="control-group">
+        <label>
+            <input type="checkbox" id="crosshair-toggle" />
+            Show crosshair
+        </label>
+    </div>
+    <div class="control-group">
+        <label>
+            <input type="checkbox" id="sector-grid-toggle" />
+            Show sector borders
+        </label>
+    </div>
+    <div id="coords">
+        X: <span id="coord-x">-</span>, Y: <span id="coord-y">-</span>, Z: <span id="coord-z">-</span> | <span id="sector-file">-</span>
+    </div>
+</div>
+<div id="map">
+    <svg id="crosshair" width="40" height="40" viewBox="0 0 40 40">
+        <line x1="20" y1="5" x2="20" y2="35" />
+        <line x1="5" y1="20" x2="35" y2="20" />
+    </svg>
+</div>
+</div>
+<div id="copy-toast"></div>
+
+<script>
+    const floors = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+    const minZoom = 0;
+    const maxZoom = 5;
+    const minTileX = 31872;
+    const maxTileX = 33407;
+    const minTileY = 31488;
+    const maxTileY = 33023;
+
+    let currentFloor = 7;
+    let tileLayer = null;
+
+    const CustomCRS = L.extend({}, L.CRS.Simple, {
+        transformation: new L.Transformation(1, 0, 1, 0)
+    });
+
+    const map = L.map('map', {
+        crs: CustomCRS,
+        minZoom: minZoom,
+        maxZoom: maxZoom,
+        attributionControl: false
+    });
+
+    function parseHash() {
+        const hash = window.location.hash.substring(1);
+        if (!hash) return null;
+
+        const parts = hash.split(',');
+        if (parts.length !== 4) return null;
+
+        const [x, y, z, zoom] = parts.map(p => parseInt(p, 10));
+
+        if (isNaN(x) || isNaN(y) || isNaN(z) || isNaN(zoom)) return null;
+        if (!floors.includes(z)) return null;
+        if (zoom < minZoom || zoom > maxZoom) return null;
+
+        return { x, y, z, zoom };
+    }
+
+    function worldToTile(worldX, worldY) {
+        const tileX = worldX - minTileX;
+        const tileY = worldY - minTileY;
+        return { tileX, tileY };
+    }
+
+    function updateHash() {
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+
+        const tileX = Math.floor(center.lng);
+        const tileY = Math.floor(center.lat);
+
+        const worldX = minTileX + tileX;
+        const worldY = minTileY + tileY;
+
+        const hash = `#${worldX},${worldY},${currentFloor},${zoom}`;
+        history.replaceState(null, '', hash);
+    }
+
+    function loadFloor(floor) {
+        if (tileLayer) {
+            map.removeLayer(tileLayer);
+        }
+
+        tileLayer = L.tileLayer('/asset/map/' + floor + '/{z}/{x}/{y}.png', {
+            minZoom: minZoom,
+            maxZoom: maxZoom,
+            noWrap: true,
+            bounds: [[0, 0], [33023 - 31488, 33407 - 31872]]
+        });
+
+        tileLayer.addTo(map);
+        currentFloor = floor;
+    }
+
+    const hashParams = parseHash();
+
+    if (hashParams) {
+        currentFloor = hashParams.z;
+        loadFloor(currentFloor);
+
+        document.getElementById('floor-select').value = currentFloor;
+
+        const { tileX, tileY } = worldToTile(hashParams.x, hashParams.y);
+        map.setView([tileY, tileX], hashParams.zoom);
+    } else {
+        map.setView([(33023 - 31488) / 2, (33407 - 31872) / 2], 0);
+        loadFloor(currentFloor);
+    }
+
+    let lastWorldX = 0;
+    let lastWorldY = 0;
+    let lastSectorFile = '';
+
+    map.on('mousemove', function(e) {
+        const latLng = e.latlng;
+        const tileX = Math.floor(latLng.lng);
+        const tileY = Math.floor(latLng.lat);
+
+        const worldX = minTileX + tileX;
+        const worldY = minTileY + tileY;
+
+        lastWorldX = worldX;
+        lastWorldY = worldY;
+
+        const sectorX = Math.floor(worldX / 32);
+        const sectorY = Math.floor(worldY / 32);
+        const sectorFile = `${sectorX.toString().padStart(4, '0')}-${sectorY.toString().padStart(4, '0')}-${currentFloor.toString().padStart(2, '0')}.sec`;
+
+        lastSectorFile = sectorFile;
+
+        document.getElementById('coord-x').textContent = worldX;
+        document.getElementById('coord-y').textContent = worldY;
+        document.getElementById('coord-z').textContent = currentFloor;
+        document.getElementById('sector-file').textContent = sectorFile;
+    });
+
+    let updateHashTimeout;
+    map.on('moveend', function() {
+        clearTimeout(updateHashTimeout);
+        updateHashTimeout = setTimeout(updateHash, 100);
+    });
+
+    map.on('zoomend', updateHash);
+
+    document.getElementById('floor-select').addEventListener('change', function(e) {
+        loadFloor(parseInt(e.target.value));
+        updateHash();
+    });
+
+    window.addEventListener('hashchange', function() {
+        const hashParams = parseHash();
+        if (hashParams) {
+            if (hashParams.z !== currentFloor) {
+                loadFloor(hashParams.z);
+                document.getElementById('floor-select').value = hashParams.z;
+            }
+
+            const { tileX, tileY } = worldToTile(hashParams.x, hashParams.y);
+            map.setView([tileY, tileX], hashParams.zoom);
+        }
+    });
+
+    // Monster spawn overlay
+    let spawnData = null;
+    let spawnMarkers = [];
+
+    // Sector grid overlay
+    let sectorGridLines = [];
+
+    fetch('/asset/map/spawns.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Spawn data not found');
+            }
+            return response.json();
+        })
+        .then(data => {
+            spawnData = data;
+            updateSpawnLayer();
+        })
+        .catch(err => {
+            console.warn('Monster spawns unavailable:', err);
+            const toggle = document.getElementById('spawn-toggle');
+            if (toggle) {
+                toggle.disabled = true;
+                toggle.parentElement.title = 'Monster spawn data not available';
+            }
+        });
+
+    // Quest chest overlay
+    let questChestData = null;
+    let questChestMarkers = [];
+
+    fetch('/asset/map/questchests.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Quest chest data not found');
+            }
+            return response.json();
+        })
+        .then(data => {
+            questChestData = data;
+            updateQuestChestLayer();
+        })
+        .catch(err => {
+            console.warn('Quest chests unavailable:', err);
+            const toggle = document.getElementById('questchest-toggle');
+            if (toggle) {
+                toggle.disabled = true;
+                toggle.parentElement.title = 'Quest chest data not available';
+            }
+        });
+
+    function worldToLatLng(worldX, worldY) {
+        const tileX = worldX - minTileX;
+        const tileY = worldY - minTileY;
+        return [tileY, tileX];
+    }
+
+    function updateSpawnLayer() {
+        spawnMarkers.forEach(marker => map.removeLayer(marker));
+        spawnMarkers = [];
+
+        const toggle = document.getElementById('spawn-toggle');
+        const showSpawns = toggle && toggle.checked;
+        const currentZoom = map.getZoom();
+
+        if (!showSpawns || !spawnData || currentZoom < 3) {
+            return;
+        }
+
+        const floorSpawns = spawnData.spawns_by_floor[currentFloor] || [];
+        const bounds = map.getBounds();
+
+        const visibleSpawns = floorSpawns.filter(spawn => {
+            const [lat, lng] = worldToLatLng(spawn.x, spawn.y);
+            return bounds.contains([lat, lng]);
+        });
+
+        visibleSpawns.forEach(spawn => {
+            const [lat, lng] = worldToLatLng(spawn.x, spawn.y);
+
+            const icon = L.divIcon({
+                className: 'spawn-marker',
+                html: `
+                    <img src="/asset/map/monsters/${spawn.race}.png" alt="Race ${spawn.race}" onerror="this.style.display='none'" />
+                    <div class="spawn-amount">${spawn.amount}</div>
+                `,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                popupAnchor: [0, -16]
+            });
+
+            const marker = L.marker([lat, lng], { icon: icon })
+                .bindPopup(`
+                    <b>${spawn.name ? spawn.name.charAt(0).toUpperCase() + spawn.name.slice(1) + ' (ID: ' + spawn.race + ')' : 'Race ID: ' + spawn.race}</b><br/>
+                    Spawn amount: ${spawn.amount}<br/>
+                    Position: ${spawn.x}, ${spawn.y}
+                `);
+
+            marker.addTo(map);
+            spawnMarkers.push(marker);
+        });
+    }
+
+    function updateQuestChestLayer() {
+        questChestMarkers.forEach(marker => map.removeLayer(marker));
+        questChestMarkers = [];
+
+        const toggle = document.getElementById('questchest-toggle');
+        const showQuestChests = toggle && toggle.checked;
+        const currentZoom = map.getZoom();
+
+        if (!showQuestChests || !questChestData || currentZoom < 3) {
+            return;
+        }
+
+        const floorChests = questChestData.questchests_by_floor[currentFloor] || [];
+        const bounds = map.getBounds();
+
+        const visibleChests = floorChests.filter(chest => {
+            const [lat, lng] = worldToLatLng(chest.x, chest.y);
+            return bounds.contains([lat, lng]);
+        });
+
+        visibleChests.forEach(chest => {
+            // Center the marker on the tile by adding 0.5 offset
+            const [lat, lng] = worldToLatLng(chest.x + 0.5, chest.y + 0.5);
+
+            const marker = L.circleMarker([lat, lng], {
+                radius: 10,
+                fillColor: '#FFD700',
+                color: '#FFD700',
+                weight: 3,
+                opacity: 0.9,
+                fillOpacity: 0.7
+            })
+            .bindPopup(`
+                <b>${chest.quest_name ? chest.quest_name : 'Unknown quest'}</b><br/>
+                Quest number: ${chest.quest_number}
+            `);
+
+            marker.addTo(map);
+            questChestMarkers.push(marker);
+        });
+    }
+
+    function updateSectorGridLayer() {
+        sectorGridLines.forEach(line => map.removeLayer(line));
+        sectorGridLines = [];
+
+        const toggle = document.getElementById('sector-grid-toggle');
+        const showGrid = toggle && toggle.checked;
+        const currentZoom = map.getZoom();
+
+        if (!showGrid || currentZoom < 3) {
+            return;
+        }
+
+        const bounds = map.getBounds();
+        const minTileX_view = Math.floor(bounds.getSouthWest().lng);
+        const maxTileX_view = Math.ceil(bounds.getNorthEast().lng);
+        const minTileY_view = Math.floor(bounds.getSouthWest().lat);
+        const maxTileY_view = Math.ceil(bounds.getNorthEast().lat);
+
+        const minWorldX_view = minTileX + minTileX_view;
+        const maxWorldX_view = minTileX + maxTileX_view;
+        const minWorldY_view = minTileY + minTileY_view;
+        const maxWorldY_view = minTileY + maxTileY_view;
+
+        const minSectorX = Math.floor(minWorldX_view / 32);
+        const maxSectorX = Math.ceil(maxWorldX_view / 32);
+        const minSectorY = Math.floor(minWorldY_view / 32);
+        const maxSectorY = Math.ceil(maxWorldY_view / 32);
+
+        const mapMinWorldX = minTileX;
+        const mapMaxWorldX = maxTileX;
+        const mapMinWorldY = minTileY;
+        const mapMaxWorldY = maxTileY;
+
+        for (let sectorX = minSectorX; sectorX <= maxSectorX; sectorX++) {
+            const worldX = sectorX * 32;
+
+            if (worldX < mapMinWorldX || worldX > mapMaxWorldX) {
+                continue;
+            }
+
+            const [latStart, lng] = worldToLatLng(worldX, Math.max(minWorldY_view, mapMinWorldY));
+            const [latEnd, _] = worldToLatLng(worldX, Math.min(maxWorldY_view, mapMaxWorldY));
+
+            const line = L.polyline(
+                [[latStart, lng], [latEnd, lng]],
+                {
+                    color: '#00FFFF',
+                    weight: 1,
+                    opacity: 0.3,
+                    interactive: false
+                }
+            );
+
+            line.addTo(map);
+            sectorGridLines.push(line);
+        }
+
+        for (let sectorY = minSectorY; sectorY <= maxSectorY; sectorY++) {
+            const worldY = sectorY * 32;
+
+            if (worldY < mapMinWorldY || worldY > mapMaxWorldY) {
+                continue;
+            }
+
+            const [lat, lngStart] = worldToLatLng(Math.max(minWorldX_view, mapMinWorldX), worldY);
+            const [_, lngEnd] = worldToLatLng(Math.min(maxWorldX_view, mapMaxWorldX), worldY);
+
+            const line = L.polyline(
+                [[lat, lngStart], [lat, lngEnd]],
+                {
+                    color: '#00FFFF',
+                    weight: 1,
+                    opacity: 0.3,
+                    interactive: false
+                }
+            );
+
+            line.addTo(map);
+            sectorGridLines.push(line);
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('copy-toast');
+        if (toast) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+    }
+
+    async function copyToClipboard(text, label) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(`Copied: ${label}`);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            showToast('Copy failed - clipboard not available');
+        }
+    }
+
+    const spawnToggle = document.getElementById('spawn-toggle');
+    if (spawnToggle) {
+        spawnToggle.addEventListener('change', updateSpawnLayer);
+    }
+
+    const questChestToggle = document.getElementById('questchest-toggle');
+    if (questChestToggle) {
+        questChestToggle.addEventListener('change', updateQuestChestLayer);
+    }
+
+    const crosshairToggle = document.getElementById('crosshair-toggle');
+    const crosshair = document.getElementById('crosshair');
+    if (crosshairToggle && crosshair) {
+        crosshairToggle.addEventListener('change', function() {
+            if (this.checked) {
+                crosshair.classList.add('visible');
+            } else {
+                crosshair.classList.remove('visible');
+            }
+        });
+    }
+
+    const sectorGridToggle = document.getElementById('sector-grid-toggle');
+    if (sectorGridToggle) {
+        sectorGridToggle.addEventListener('change', updateSectorGridLayer);
+    }
+
+    map.on('click', function(e) {
+        if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
+            const coords = `${lastWorldX},${lastWorldY},${currentFloor}`;
+            copyToClipboard(coords, coords);
+            L.DomEvent.stopPropagation(e.originalEvent);
+        }
+    });
+
+    map.getContainer().addEventListener('mousedown', function(e) {
+        if (e.button === 1) {
+            copyToClipboard(lastSectorFile, lastSectorFile);
+            e.preventDefault();
+        }
+    });
+
+    map.on('moveend', function() {
+        updateSpawnLayer();
+        updateQuestChestLayer();
+        updateSectorGridLayer();
+    });
+
+    map.on('zoomend', function() {
+        updateSpawnLayer();
+        updateQuestChestLayer();
+        updateSectorGridLayer();
+    });
+
+    const originalLoadFloor = loadFloor;
+    loadFloor = function(floor) {
+        originalLoadFloor(floor);
+        updateSpawnLayer();
+        updateQuestChestLayer();
+        updateSectorGridLayer();
+    };
+</script>

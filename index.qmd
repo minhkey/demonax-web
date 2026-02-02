@@ -1,13 +1,13 @@
 ---
-pagetitle: "Data Analytics Platform"
+pagetitle: "Demonax"
 page-layout: custom
 section-divs: false
 toc: false
 editor: source
 description: |
-  A comprehensive data analytics and visualization platform with interactive dashboards and maps.
+  A homage to the old school version of the MMORPG named after a bone, with a twist!
 include-after-body:
-  - assets/js/hero-carousel.html
+  - asset/js/hero-carousel.html
 ---
 
 ::: {.hero-banner}
@@ -20,31 +20,25 @@ include-after-body:
   <i class="bi bi-chevron-right"></i>
 </button>
 
-<!-- Carousel indicators -->
-<div class="hero-carousel-indicators">
-  <button class="hero-carousel-indicator active" aria-label="Go to image 1"></button>
-  <button class="hero-carousel-indicator" aria-label="Go to image 2"></button>
-  <button class="hero-carousel-indicator" aria-label="Go to image 3"></button>
-</div>
-
 ::: {.content-block .py-4}
 
 ::: {.hero-text}
-# Data Analytics Platform {.mt-1}
+# Welcome to Demonax {.mt-1}
 
-### Your comprehensive solution for data visualization and analysis
+### A homage to an old school version of that MMORPG named after a bone, with a twist!
 
-- **Interactive Dashboards** - Explore key metrics and insights through dynamic visualizations
-- **Geospatial Analysis** - View and analyze location-based data with interactive maps
-- **Real-time Statistics** - Monitor trends and patterns with comprehensive statistical displays
-- **Flexible Reporting** - Generate custom reports and export data in multiple formats
+- **Free to play** - All accounts receive free premium, forever.
+- **New creatures** - Face a wide range of new creatures, including bosses
+- **New quests and areas** - Embark on new adventures with exciting new quests and areas to explore
+- **New spells** - Multiple instant spells and runes takes your hunting to a new level 
+- **Enhanced gameplay** - Higher rates, bestiary, achievements, and much more!
 
 ::: {.grid .gap-3 .pb-3 .pt-4}
 ::: {.g-col-12 .g-col-sm-6}
 [Learn more](qmd/about.qmd){.btn-action-primary .btn-action .btn .btn-lg .w-100 role="button"}
 :::
 ::: {.g-col-12 .g-col-sm-6 .mb-2}
-[Explore map](qmd/guidance/map.qmd){.btn-action .btn-secondary .btn .btn-lg .w-100 role="button"}
+[Explore map](/map/index.html#32367,32239,7,3){.btn-action .btn-secondary .btn .btn-lg .w-100 role="button"}
 :::
 :::
 :::
@@ -59,35 +53,37 @@ include-after-body:
 ::: {.features}
 
 ::: {.feature}
-### Data Visualization
-Create stunning visualizations with our comprehensive charting library. Support for bar charts, line graphs, scatter plots, and more.
+### Enjoy enhanced gameplay
+Updated graphiscs, new outfits, a bestiary, harvesting mechanics, a questlog, and achievements. Advance faster with higher skillrates and more experience. Train on dedicated creatures, idle 24/7!
 
 ::: {.learn-more}
-[Learn more »](qmd/statistics.qmd)
+[Learn more »](qmd/about.qmd)
 :::
 :::
 
 ::: {.feature}
-### Interactive Maps
-Explore geographical data with interactive Leaflet maps. Zoom, pan, and interact with location-based information.
+### New adventures await
+Old areas have been expanded and completely new continents have been added, both inhabited by new creatures and new bosses. Enjoy the classic old quests and go on new adventures!
 
 ::: {.learn-more}
-[Learn more »](qmd/guidance/map.qmd)
+[Learn more »](/map/index.html)
 :::
 :::
 
 ::: {.feature}
-### Performance Analytics
-Monitor key performance indicators with value boxes and metrics. Track trends and identify patterns in your data.
+### Receive a weekly present
+No more time for the grind? Don't worry, all characters receive a weekly present every Friday. A small token of appreciation that makes sure your week ends with successfull hunt!
 
 ::: {.learn-more}
-[Learn more »](qmd/statistics.qmd)
+[Learn more »](qmd/about.qmd)
 :::
 :::
 
 ::: {.feature}
-### Daily Cat
-![](assets/img/daily.gif){width=100%}
+### Today's boosted creature
+Boosted creatures give 4x experience and have 2x loot chance. What are you wating for? get out there!
+
+![](asset/img/daily.gif){width=100%}
 :::
 
 :::
@@ -96,6 +92,6 @@ Monitor key performance indicators with value boxes and metrics. Track trends an
 
 ::: {.content-block .py-5}
 
-Explore our platform by navigating through the comprehensive menu options above to discover all the tools and resources available to you. Start with the About page to understand our platform capabilities, or dive directly into the PMX section to view team performance metrics and leaderboards. The Guidance section provides essential information about approved software, server infrastructure, and helpful resources to streamline your workflow. Each page features interactive data tables that allow you to filter, sort, and export information as needed. Our Statistics dashboard offers real-time visualizations and insights, while the Map section enables geographic data exploration with intuitive controls.
+Fine print here.
 
 :::
