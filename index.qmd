@@ -27,10 +27,10 @@ include-after-body:
 
 ### A homage to an old school version of that MMORPG named after a bone, with a twist!
 
-- **Free to play** - All accounts receive free premium, forever.
+- **Free to play** - All accounts receive free premium, forever
 - **New creatures** - Face a wide range of new creatures, including bosses
-- **New quests and areas** - Embark on new adventures with exciting new quests and areas to explore
-- **New spells** - Multiple instant spells and runes takes your hunting to a new level 
+- **New quests and areas** - Embark on exciting adventures with new quests and areas to explore
+- **New spells** - Additional instant spells and runes takes your hunting to a new level 
 - **Enhanced gameplay** - Higher rates, bestiary, achievements, and much more!
 
 ::: {.grid .gap-3 .pb-3 .pt-4}
@@ -54,7 +54,7 @@ include-after-body:
 
 ::: {.feature}
 ### Enjoy enhanced gameplay
-Updated graphiscs, new outfits, a bestiary, harvesting mechanics, a questlog, and achievements. Advance faster with higher skillrates and more experience. Train on dedicated creatures, idle 24/7!
+Updated graphics, new outfits, a bestiary, harvesting mechanics, a questlog, and achievements. Advance faster with higher skillrates and more experience. Train on dedicated creatures, idle 24/7!
 
 ::: {.learn-more}
 [Learn more »](qmd/about.qmd)

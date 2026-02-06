@@ -297,7 +297,7 @@ knitr::kable(stats_data,
 #| results: asis
 
 if (!is.null(behavior_text)) {
-  cat("\n### Behavior & Traits\n\n")
+  cat("\n### Behavior\n\n")
   cat('<div class="creature-behavior">\n')
   cat(behavior_text, "\n")
   cat('</div>\n\n')

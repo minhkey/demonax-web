@@ -8,106 +8,19 @@ format: html
 #| echo: false
 #| include: false
 
-library(DBI)
-library(RSQLite)
-library(dplyr)
-library(jsonlite)
+# Load shared utilities
+source("_common.R")
 
-# Connect to database
-con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
-
-items <- dbReadTable(con, "items")
-item_loot_sources <- dbReadTable(con, "item_loot_sources")
-item_prices <- dbReadTable(con, "item_prices")
-creatures <- dbReadTable(con, "creatures")
-npc_locations <- dbReadTable(con, "npc_locations")
-
+# Connect to database and load tables
+con <- get_db_connection("../../asset/demonax-test.sqlite")
+tables <- load_item_tables(con)
+quests <- dbReadTable(con, "quests")
 DBI::dbDisconnect(con)
 
-# Helper function to generate NPC map links (vectorized)
-generate_npc_map_link <- function(npc_name, x, y, z) {
-  mapply(function(name, x_coord, y_coord, z_coord) {
-    if (is.na(name) || is.na(x_coord) || is.na(y_coord) || is.na(z_coord)) {
-      return(name)
-    }
-    zoom <- 5
-    hash <- sprintf("#%d,%d,%d,%d?crosshair=1&npcs=1", x_coord, y_coord, z_coord, zoom)
-    url <- sprintf("/map/index.html%s", hash)
-    return(sprintf('<a href="%s" style="color: #004294; text-decoration: none; font-weight: 500;">%s</a>',
-                   url, name))
-  }, npc_name, x, y, z, USE.NAMES = FALSE)
-}
-
-# Parse JSON attributes for all items
-parse_attrs <- function(attr_json) {
-  tryCatch({
-    if(is.na(attr_json) || attr_json == "") return(list())
-    fromJSON(attr_json)
-  }, error = function(e) list())
-}
-
-items$parsed_attrs <- lapply(items$attributes, parse_attrs)
-
 # Get available item images to avoid 404s
-item_files <- list.files("../../asset/img/item", pattern = "^[0-9]+\\.png$")
-available_items <- as.integer(gsub("\\.png$", "", item_files))
+available_items <- get_available_item_images("../../asset/img/item")
 
-# Create extraction function
-extract_attributes <- function(parsed_attrs_list, attr_config) {
-  result <- list()
-
-  for(attr_name in names(attr_config)) {
-    config <- attr_config[[attr_name]]
-
-    result[[config$output_name]] <- sapply(parsed_attrs_list, function(x) {
-      # Check both exact match and case-insensitive match
-      value <- NULL
-      if(attr_name %in% names(x)) {
-        value <- x[[attr_name]]
-      } else {
-        matching_names <- names(x)[tolower(names(x)) == tolower(attr_name)]
-        if(length(matching_names) > 0) {
-          value <- x[[matching_names[1]]]
-        }
-      }
-
-      if(is.null(value)) return(config$default)
-
-      switch(config$type,
-        "integer" = as.integer(value),
-        "numeric" = as.numeric(value),
-        "character" = as.character(value),
-        value
-      )
-    })
-  }
-
-  return(result)
-}
-
-# Create damage type decoder (vectorized)
-decode_damage_types <- function(bitfield) {
-  sapply(bitfield, function(bf) {
-    if(is.na(bf) || bf == 0) return("")
-
-    damage_types <- c(
-      "Physical" = 1,
-      "Poison" = 2,
-      "Fire" = 4,
-      "Energy" = 8,
-      "Poison (periodic)" = 32,
-      "Fire (periodic)" = 64,
-      "Energy (periodic)" = 128,
-      "Lifedrain" = 256,
-      "Manadrain" = 512
-    )
-
-    active_types <- names(damage_types)[bitwAnd(bf, damage_types) > 0]
-    paste(active_types, collapse = ", ")
-  })
-}
-
-# Define attribute configuration
+# Define equipment attribute configuration (equipment-specific)
 equipment_attr_config <- list(
   "BodyPosition" = list(output_name = "body_position", type = "integer", default = NA_integer_),
   "ArmorValue" = list(output_name = "armor_value", type = "integer", default = 0L),
@@ -115,105 +28,81 @@ equipment_attr_config <- list(
   "DamageReduction" = list(output_name = "damage_reduction", type = "integer", default = 0L),
   "ProtectionDamageTypes" = list(output_name = "protection_damage_types", type = "integer", default = 0L),
   "WeaknessDamageTypes" = list(output_name = "weakness_damage_types", type = "integer", default = 0L),
-  "AvoidDamageTypes" = list(output_name = "avoid_damage_types", type = "integer", default = 0L),
   "SkillModification" = list(output_name = "skill_modification", type = "integer", default = 0L),
   "SkillNumber" = list(output_name = "skill_number", type = "integer", default = NA_integer_),
   "MinimumLevel" = list(output_name = "minimum_level", type = "integer", default = 0L),
+  "Weight" = list(output_name = "weight", type = "integer", default = NA_integer_),
   "Professions" = list(output_name = "professions", type = "integer", default = NA_integer_),
   "CriticalHitChance" = list(output_name = "critical_hit_chance", type = "integer", default = 0L),
   "CriticalHitIncrease" = list(output_name = "critical_hit_increase", type = "integer", default = 0L),
   "ShieldDefendValue" = list(output_name = "shield_defend_value", type = "integer", default = 0L),
-  "Capacity" = list(output_name = "capacity", type = "integer", default = 0L),
-  "Brightness" = list(output_name = "brightness", type = "integer", default = 0L),
-  "LightColor" = list(output_name = "light_color", type = "integer", default = 0L),
-  "Meaning" = list(output_name = "meaning", type = "character", default = "")
+  "Capacity" = list(output_name = "capacity", type = "integer", default = 0L)
 )
 
-# Extract equipment attributes
-extracted_attrs <- extract_attributes(items$parsed_attrs, equipment_attr_config)
+# Process items with parsed attributes and extracted columns
+items <- tables$items |>
+  add_parsed_attrs() |>
+  add_extracted_attrs(equipment_attr_config)
 
-for(col_name in names(extracted_attrs)) {
-  items[[col_name]] <- extracted_attrs[[col_name]]
-}
+# Prepare lookup tables using shared functions
+loot_lookup <- create_loot_lookup(tables$item_loot_sources, tables$creatures)
+sell_lookup <- create_sell_lookup(tables$item_prices, tables$npc_locations)
+buy_lookup <- create_buy_lookup(tables$item_prices, tables$npc_locations)
+quest_lookup <- create_quest_lookup(quests)
 
-# Prepare lookup tables
-loot_lookup <- item_loot_sources |>
-  left_join(creatures, by = c("creature_id" = "id")) |>
-  group_by(item_id) |>
-  summarize(lootable_from = paste(unique(tools::toTitleCase(name)), collapse = ", "), .groups = "drop")
-
-sell_lookup <- item_prices |>
-  filter(mode == "sell") |>
-  left_join(npc_locations, by = "npc_name") |>
-  group_by(item_id) |>
-  summarize(
-    sell_npc = first(npc_name),
-    sell_price = max(price),
-    sell_npc_html = ifelse(
-      !is.na(first(x)),
-      generate_npc_map_link(first(npc_name), first(x), first(y), first(z)),
-      first(npc_name)
+# Prepare all equipment data once (do joins and mutations only once)
+equipment_data <- items |>
+  left_join(loot_lookup, by = c("type_id" = "item_id")) |>
+  left_join(sell_lookup, by = c("type_id" = "item_id")) |>
+  left_join(buy_lookup, by = c("type_id" = "item_id")) |>
+  mutate(
+    image = ifelse(
+      type_id %in% available_items,
+      paste0('<img src="../../asset/img/item/', type_id, '.png" width="32" height="32">'),
+      '<span  style="display:inline-block;width:32px;height:32px;background:#e0e0e0;border-radius:3px;"></span>'
     ),
-    .groups = "drop"
-  )
-
-buy_lookup <- item_prices |>
-  filter(mode == "buy") |>
-  left_join(npc_locations, by = "npc_name") |>
-  group_by(item_id) |>
-  summarize(
-    buy_npc = first(npc_name),
-    buy_price = max(price),
-    buy_npc_html = ifelse(
-      !is.na(first(x)),
-      generate_npc_map_link(first(npc_name), first(x), first(y), first(z)),
-      first(npc_name)
+    profession = decode_professions(professions),
+    level = ifelse(
+      minimum_level > 0,
+      minimum_level,
+      ""
     ),
-    .groups = "drop"
-  )
-
-# Function to create equipment table
-create_equipment_table <- function(body_position_filter) {
-  items |>
-    filter(body_position == body_position_filter) |>
-    left_join(loot_lookup, by = c("type_id" = "item_id")) |>
-    left_join(sell_lookup, by = c("type_id" = "item_id")) |>
-    left_join(buy_lookup, by = c("type_id" = "item_id")) |>
-    mutate(
-      Image = ifelse(
-        type_id %in% available_items,
-        paste0('<img src="../../asset/img/item/', type_id, '.png" width="32" height="32">'),
-        '<span style="display:inline-block;width:32px;height:32px;background:#e0e0e0;border-radius:3px;"></span>'
+    skill = case_when(
+      is.na(skill_number) ~ "",
+      skill_number == 1 ~ paste0("Magic level +", skill_modification),
+      skill_number == 4 ~ paste0("Speed +", skill_modification),
+      skill_number == 8 ~ paste0("Sword fighting +", skill_modification),
+      skill_number == 9 ~ paste0("Club fighting +", skill_modification),
+      skill_number == 10 ~ paste0("Axe fighting +", skill_modification),
+      TRUE ~ ""  # default
+    ),
+    critical = ifelse(
+      critical_hit_chance > 0,
+      paste0(critical_hit_chance, "% / ", critical_hit_increase, "%"),
+      ""
+    ),
+    defense = shield_defend_value,
+    protection = ifelse(
+      protection_damage_types > 0,
+      paste0(
+        decode_damage_types(protection_damage_types),
+        " -", damage_reduction, "%"
+        ),
+      ""
+    ),
+    weakness = ifelse(
+      weakness_damage_types > 0,
+      paste0(
+        decode_damage_types(weakness_damage_types),
+        " +", damage_increase, "%"
       ),
-      Name = name,
-      Armor = armor_value,
-      `Dmg+` = damage_increase,
-      `Dmg-` = damage_reduction,
-      `Min Lvl` = ifelse(minimum_level > 0, as.character(minimum_level), ""),
-      `Skill+` = ifelse(skill_modification != 0,
-                       ifelse(skill_modification > 0, paste0("+", skill_modification), as.character(skill_modification)),
-                       ""),
-      `Crit%` = ifelse(critical_hit_chance > 0, as.character(critical_hit_chance), ""),
-      `Crit Dmg` = ifelse(critical_hit_increase > 0, as.character(critical_hit_increase), ""),
-      `Shield Def` = ifelse(shield_defend_value > 0, as.character(shield_defend_value), ""),
-      Protection = decode_damage_types(protection_damage_types),
-      Weakness = decode_damage_types(weakness_damage_types),
-      Avoid = decode_damage_types(avoid_damage_types),
-      Light = ifelse(brightness > 0, as.character(brightness), ""),
-      Capacity = ifelse(capacity > 0, as.character(capacity), ""),
-      Weight = weight / 100,
-      Description = ifelse(is.na(description) | description == "", "", description),
-      `Rewarded From` = ifelse(is.na(rewarded_from) | rewarded_from == "", "", rewarded_from),
-      `Lootable From` = ifelse(is.na(lootable_from), "", lootable_from),
-      `Sell To` = ifelse(!is.na(sell_npc), paste0(sell_npc_html, " (", sell_price, " gp)"), ""),
-      `Buy From` = ifelse(!is.na(buy_npc), paste0(buy_npc_html, " (", buy_price, " gp)"), "")
-    ) |>
-    select(Image, Name, Armor, `Dmg+`, `Dmg-`, `Min Lvl`, `Skill+`,
-           `Crit%`, `Crit Dmg`, `Shield Def`, Protection, Weakness, Avoid,
-           Light, Capacity, Weight, Description, `Rewarded From`,
-           `Lootable From`, `Sell To`, `Buy From`) |>
-    arrange(desc(Armor), desc(`Dmg+`), desc(`Dmg-`))
-}
+      ""
+    ),
+    description = ifelse(!is.na(description), description, ""),
+    sell_to = ifelse(!is.na(sell_npc), paste0(sell_npc_html, " (", sell_price, " gp)"), ""),
+    buy_from = ifelse(!is.na(buy_npc), paste0(buy_npc_html, " (", buy_price, " gp)"), ""),
+    rewarded_from_html = sapply(rewarded_from, function(x) convert_quest_rewards_to_links(x, quest_lookup))
+  )
 ```
 
 ::: {.panel-tabset}
@@ -224,19 +113,57 @@ create_equipment_table <- function(body_position_filter) {
 #| warning: false
 #| echo: false
 
-equipment_data <- create_equipment_table(1)
-DT::datatable(equipment_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+helmets <- equipment_data |>
+  filter(body_position == 1) |>
+  select(
+    Image = image,
+    Name = name,
+    Armor = armor_value,
+    Weight = weight,
+    Level = level,
+    Profession = profession,
+    Skill = skill,
+    Protection = protection,
+    Weakness = weakness,
+    Critical = critical,
+    Description = description,
+    `Lootable from` = lootable_from,
+    `Rewarded from` = rewarded_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Armor))
+
+create_datatable(helmets, image_col_width = "32px")
+```
+
+### Necklaces
+
+```{r}
+#| warning: false
+#| echo: false
+necklaces <- equipment_data |>
+  filter(body_position == 2) |>
+    select(
+    Image = image,
+    Name = name,
+    Armor = armor_value,
+    Weight = weight,
+    Level = level,
+    Profession = profession,
+    Skill = skill,
+    Protection = protection,
+    Weakness = weakness,
+    Critical = critical,
+    Description = description,
+    `Lootable from` = lootable_from,
+    `Rewarded from` = rewarded_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Armor))
+
+create_datatable(necklaces, image_col_width = "50px")
 ```
 
 ### Armors
@@ -245,19 +172,28 @@ DT::datatable(equipment_data,
 #| warning: false
 #| echo: false
 
-equipment_data <- create_equipment_table(4)
-DT::datatable(equipment_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+armors <- equipment_data |>
+  filter(body_position == 4) |>
+  select(
+    Image = image,
+    Name = name,
+    Armor = armor_value,
+    Weight = weight,
+    Level = level,
+    Profession = profession,
+    Skill = skill,
+    Protection = protection,
+    Weakness = weakness,
+    Critical = critical,
+    Description = description,
+    `Lootable from` = lootable_from,
+    `Rewarded from` = rewarded_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Armor))
+
+create_datatable(armors, image_col_width = "50px")
 ```
 
 ### Shields
@@ -266,19 +202,24 @@ DT::datatable(equipment_data,
 #| warning: false
 #| echo: false
 
-equipment_data <- create_equipment_table(5)
-DT::datatable(equipment_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+shields <- equipment_data |>
+  filter(grepl("Shield", flags)) |>
+  select(
+    Image = image,
+    Name = name,
+    Defense = defense,
+    Weight = weight,
+    Level = level,
+    Profession = profession,
+    Description = description,
+    `Lootable from` = lootable_from,
+    `Rewarded from` = rewarded_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Defense))
+
+create_datatable(shields, image_col_width = "50px")
 ```
 
 ### Legs
@@ -287,19 +228,28 @@ DT::datatable(equipment_data,
 #| warning: false
 #| echo: false
 
-equipment_data <- create_equipment_table(6)
-DT::datatable(equipment_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+legs <- equipment_data |>
+  filter(body_position == 7) |>
+  select(
+    Image = image,
+    Name = name,
+    Armor = armor_value,
+    Weight = weight,
+    Level = level,
+    Profession = profession,
+    Skill = skill,
+    Protection = protection,
+    Weakness = weakness,
+    Critical = critical,
+    Description = description,
+    `Lootable from` = lootable_from,
+    `Rewarded from` = rewarded_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Armor))
+
+create_datatable(legs, image_col_width = "50px")
 ```
 
 ### Boots
@@ -308,19 +258,28 @@ DT::datatable(equipment_data,
 #| warning: false
 #| echo: false
 
-equipment_data <- create_equipment_table(8)
-DT::datatable(equipment_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+boots <- equipment_data |>
+  filter(body_position == 8) |>
+  select(
+    Image = image,
+    Name = name,
+    Armor = armor_value,
+    Weight = weight,
+    Level = level,
+    Profession = profession,
+    Skill = skill,
+    Protection = protection,
+    Weakness = weakness,
+    Critical = critical,
+    Description = description,
+    `Lootable from` = lootable_from,
+    `Rewarded from` = rewarded_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Armor))
+
+create_datatable(boots, image_col_width = "50px")
 ```
 
 ### Rings
@@ -329,21 +288,53 @@ DT::datatable(equipment_data,
 #| warning: false
 #| echo: false
 
-equipment_data <- create_equipment_table(9)
-DT::datatable(equipment_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+rings <- equipment_data |>
+  filter(body_position == 9) |>
+  distinct(name, .keep_all = TRUE) |>
+  select(
+    Image = image,
+    Name = name,
+    Armor = armor_value,
+    Weight = weight,
+    Level = level,
+    Profession = profession,
+    Skill = skill,
+    Protection = protection,
+    Weakness = weakness,
+    Critical = critical,
+    Description = description,
+    `Lootable from` = lootable_from,
+    `Rewarded from` = rewarded_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Armor))
+
+create_datatable(rings, image_col_width = "50px")
 ```
 
 ### Containers
+
+```{r}
+#| warning: false
+#| echo: false
+
+containers <- equipment_data |>
+  filter(body_position == 3 & !grepl("Bag", name)) |>
+  select(
+    Image = image,
+    Name = name,
+    Capacity = capacity,
+    Weight = weight,
+    Description = description,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+    arrange(desc(Capacity))
+
+create_datatable(containers, image_col_width = "50px")
+```
 
 :::

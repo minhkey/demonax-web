@@ -8,133 +8,120 @@ format: html
 #| echo: false
 #| include: false
 
-library(DBI)
-library(RSQLite)
-library(dplyr)
-library(jsonlite)
+# Load shared utilities
+source("_common.R")
 
-# Connect to database
-con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
-
-items <- dbReadTable(con, "items")
-item_loot_sources <- dbReadTable(con, "item_loot_sources")
-item_prices <- dbReadTable(con, "item_prices")
-creatures <- dbReadTable(con, "creatures")
-npc_locations <- dbReadTable(con, "npc_locations")
-
+# Connect to database and load tables
+con <- get_db_connection("../../asset/demonax-test.sqlite")
+tables <- load_item_tables(con)
+quests <- dbReadTable(con, "quests")
 DBI::dbDisconnect(con)
 
-# Helper function to generate NPC map links (vectorized)
-generate_npc_map_link <- function(npc_name, x, y, z) {
-  mapply(function(name, x_coord, y_coord, z_coord) {
-    if (is.na(name) || is.na(x_coord) || is.na(y_coord) || is.na(z_coord)) {
-      return(name)
-    }
-    zoom <- 5
-    hash <- sprintf("#%d,%d,%d,%d?crosshair=1&npcs=1", x_coord, y_coord, z_coord, zoom)
-    url <- sprintf("/map/index.html%s", hash)
-    return(sprintf('<a href="%s" style="color: #004294; text-decoration: none; font-weight: 500;">%s</a>',
-                   url, name))
-  }, npc_name, x, y, z, USE.NAMES = FALSE)
-}
-
-# Parse JSON attributes for all items
-parse_attrs <- function(attr_json) {
-  tryCatch({
-    if(is.na(attr_json) || attr_json == "") return(list())
-    fromJSON(attr_json)
-  }, error = function(e) list())
-}
-
-items$parsed_attrs <- lapply(items$attributes, parse_attrs)
-
 # Get available item images to avoid 404s
-item_files <- list.files("../../asset/img/item", pattern = "^[0-9]+\\.png$")
-available_items <- as.integer(gsub("\\.png$", "", item_files))
+available_items <- get_available_item_images("../../asset/img/item")
 
-# Extract weapon attributes
-items$weapon_type <- sapply(items$parsed_attrs, function(x) {
-  if("WeaponType" %in% names(x)) as.integer(x$WeaponType) else NA_integer_
-})
+# Define weapon attribute configuration
+weapon_attr_config <- list(
+  "WeaponType" = list(output_name = "weapon_type", type = "integer", default = NA_integer_),
+  "WeaponAttackValue" = list(output_name = "attack_value", type = "integer", default = NA_integer_),
+  "WandAttackStrength" = list(output_name = "wand_attack", type = "integer", default = NA_integer_),
+  "WeaponDefendValue" = list(output_name = "defense", type = "integer", default = 0L),
+  "BodyPosition" = list(output_name = "body_position", type = "integer", default = NA_integer_),
+  "Weight" = list(output_name = "weight", type = "integer", default = NA_integer_),
+  "Professions" = list(output_name = "professions", type = "integer", default = NA_integer_),
+  "WandRange" = list(output_name = "wand_range", type = "integer", default = NA_integer_),
+  "BowRange" = list(output_name = "bow_range", type = "integer", default = NA_integer_),
+  "ThrowRange" = list(output_name = "throw_range", type = "integer", default = NA_integer_),
+  "ThrowAttackValue" = list(output_name = "throw_attack", type = "integer", default = NA_integer_),
+  "ThrowFragility" = list(output_name = "throw_fragility", type = "integer", default = NA_integer_),
+  "AmmoAttackValue" = list(output_name = "ammo_attack", type = "integer", default = NA_integer_),
+  "WandAttackVariation" = list(output_name = "wand_variation", type = "integer", default = NA_integer_),
+  "WandDamageType" = list(output_name = "wand_damage_type", type = "integer", default = NA_integer_),
+  "MinimumLevel" = list(output_name = "minimum_level", type = "integer", default = 0L)
+)
 
-items$attack <- sapply(items$parsed_attrs, function(x) {
-  if("WeaponAttackValue" %in% names(x)) as.integer(x$WeaponAttackValue)
-  else if("WandAttackStrength" %in% names(x)) as.integer(x$WandAttackStrength)
-  else NA_integer_
-})
+# Process items with parsed attributes and extracted columns
+items <- tables$items |>
+  add_parsed_attrs() |>
+  add_extracted_attrs(weapon_attr_config)
 
-items$defense <- sapply(items$parsed_attrs, function(x) {
-  if("WeaponDefendValue" %in% names(x)) as.integer(x$WeaponDefendValue) else 0L
-})
+# Prepare lookup tables using shared functions
+loot_lookup <- create_loot_lookup(tables$item_loot_sources, tables$creatures)
+sell_lookup <- create_sell_lookup(tables$item_prices, tables$npc_locations)
+buy_lookup <- create_buy_lookup(tables$item_prices, tables$npc_locations)
+quest_lookup <- create_quest_lookup(quests)
 
-items$body_position <- sapply(items$parsed_attrs, function(x) {
-  if("BodyPosition" %in% names(x)) as.integer(x$BodyPosition) else NA_integer_
-})
-
-# Prepare lookup tables
-loot_lookup <- item_loot_sources |>
-  left_join(creatures, by = c("creature_id" = "id")) |>
-  group_by(item_id) |>
-  summarize(lootable_from = paste(unique(name), collapse = ", "), .groups = "drop")
-
-sell_lookup <- item_prices |>
-  filter(mode == "sell") |>
-  left_join(npc_locations, by = "npc_name") |>
-  group_by(item_id) |>
-  summarize(
-    sell_npc = first(npc_name),
-    sell_price = max(price),
-    sell_npc_html = ifelse(
-      !is.na(first(x)),
-      generate_npc_map_link(first(npc_name), first(x), first(y), first(z)),
-      first(npc_name)
+# Prepare all weapon data once (do joins and mutations only once)
+weapons_data <- items |>
+  # Filter for items that are weapons (either have weapon_type or are ammo/bow/wand/throwable)
+  filter(!is.na(weapon_type) | grepl("Ammo|Bow|Wand|Throw", flags)) |>
+  left_join(loot_lookup, by = c("type_id" = "item_id")) |>
+  left_join(sell_lookup, by = c("type_id" = "item_id")) |>
+  left_join(buy_lookup, by = c("type_id" = "item_id")) |>
+  mutate(
+    image = ifelse(
+      type_id %in% available_items,
+      paste0('<img src="../../asset/img/item/', type_id, '.png" width="32" height="32">'),
+      '<span style="display:inline-block;width:32px;height:32px;background:#e0e0e0;border-radius:3px;"></span>'
     ),
-    .groups = "drop"
-  )
-
-buy_lookup <- item_prices |>
-  filter(mode == "buy") |>
-  left_join(npc_locations, by = "npc_name") |>
-  group_by(item_id) |>
-  summarize(
-    buy_npc = first(npc_name),
-    buy_price = max(price),
-    buy_npc_html = ifelse(
-      !is.na(first(x)),
-      generate_npc_map_link(first(npc_name), first(x), first(y), first(z)),
-      first(npc_name)
+    # Categorize weapons by type and flags
+    category = case_when(
+      weapon_type == 1 ~ "sword",
+      weapon_type == 3 ~ "axe",
+      weapon_type == 2 ~ "club",
+      grepl("Ammo", flags) ~ "ammunition",
+      grepl("Bow", flags) ~ "distance",
+      grepl("Wand", flags) & professions == 24 ~ "staff",  # Both sorcerer and druid
+      grepl("Wand", flags) & professions == 16 ~ "rod",    # Druid only
+      grepl("Wand", flags) & professions == 8 ~ "wand",    # Sorcerer only
+      grepl("Throw", flags) ~ "throwable",
+      TRUE ~ NA_character_
     ),
-    .groups = "drop"
+    # Attack: use appropriate attack value based on weapon type
+    attack = case_when(
+      !is.na(attack_value) ~ attack_value,
+      !is.na(throw_attack) ~ throw_attack,
+      !is.na(ammo_attack) ~ ammo_attack,
+      TRUE ~ NA_integer_
+    ),
+    # Damage display for wands/rods/staffs (strength ± variation)
+    damage_display = ifelse(
+      !is.na(wand_attack) & !is.na(wand_variation),
+      paste0(wand_attack, " ± ", wand_variation),
+      NA_character_
+    ),
+    hand = ifelse(body_position == 0, "Two-handed", "One-handed"),
+    # Range: use appropriate range based on weapon type
+    range = case_when(
+      !is.na(wand_range) ~ wand_range,
+      !is.na(bow_range) ~ bow_range,
+      !is.na(throw_range) ~ throw_range,
+      TRUE ~ NA_integer_
+    ),
+    # Vocation: decode professions for wands/rods/staffs
+    vocation = decode_professions(professions),
+    # Damage type for wands/rods/staffs
+    damage_type = case_when(
+      wand_damage_type == 1 ~ "Physical",
+      wand_damage_type == 2 ~ "Poison",
+      wand_damage_type == 4 ~ "Fire",
+      wand_damage_type == 8 ~ "Energy",
+      TRUE ~ NA_character_
+    ),
+    # Break chance for throwables (display as percentage)
+    break_chance = ifelse(
+      !is.na(throw_fragility),
+      paste0(throw_fragility, "%"),
+      NA_character_
+    ),
+    # Level requirement display (only show if > 0)
+    level_display = ifelse(minimum_level > 0, minimum_level, NA_integer_),
+    description = ifelse(!is.na(description) & description != "", description, ""),
+    sell_to = ifelse(!is.na(sell_npc), paste0(sell_npc_html, " (", sell_price, " gp)"), ""),
+    buy_from = ifelse(!is.na(buy_npc), paste0(buy_npc_html, " (", buy_price, " gp)"), ""),
+    rewarded_from_html = sapply(rewarded_from, function(x) convert_quest_rewards_to_links(x, quest_lookup)),
+    lootable_from_html = ifelse(!is.na(lootable_from) & lootable_from != "", lootable_from, "")
   )
-
-# Function to create weapon table
-create_weapon_table <- function(weapon_type_filter) {
-  items |>
-    filter(weapon_type == weapon_type_filter) |>
-    left_join(loot_lookup, by = c("type_id" = "item_id")) |>
-    left_join(sell_lookup, by = c("type_id" = "item_id")) |>
-    left_join(buy_lookup, by = c("type_id" = "item_id")) |>
-    mutate(
-      Image = ifelse(
-        type_id %in% available_items,
-        paste0('<img src="../../asset/img/item/', type_id, '.png" width="32" height="32">'),
-        '<span style="display:inline-block;width:32px;height:32px;background:#e0e0e0;border-radius:3px;"></span>'
-      ),
-      Name = name,
-      Hand = ifelse(body_position == 0, "Two-handed", "One-handed"),
-      Attack = attack,
-      Defense = defense,
-      Weight = weight / 100,
-      Description = ifelse(is.na(description) | description == "", "", description),
-      `Rewarded From` = ifelse(is.na(rewarded_from) | rewarded_from == "", "", rewarded_from),
-      `Lootable From` = ifelse(is.na(lootable_from), "", lootable_from),
-      `Sell To` = ifelse(!is.na(sell_npc), paste0(sell_npc_html, " (", sell_price, " gp)"), ""),
-      `Buy From` = ifelse(!is.na(buy_npc), paste0(buy_npc_html, " (", buy_price, " gp)"), "")
-    ) |>
-    select(Image, Name, Hand, Attack, Defense, Weight, Description, `Rewarded From`,
-           `Lootable From`, `Sell To`, `Buy From`) |>
-    arrange(desc(Attack))
-}
 ```
 
 ::: {.panel-tabset}
@@ -145,19 +132,26 @@ create_weapon_table <- function(weapon_type_filter) {
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(1)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+swords <- weapons_data |>
+  filter(category == "sword") |>
+  select(
+    Image = image,
+    Name = name,
+    Hand = hand,
+    Attack = attack,
+    Defense = defense,
+    Weight = weight,
+    Level = level_display,
+    Profession = vocation,
+    Description = description,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Attack))
+
+create_datatable(swords, image_col_width = "50px")
 ```
 
 ### Axes
@@ -166,19 +160,26 @@ DT::datatable(weapons_data,
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(2)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+axes <- weapons_data |>
+  filter(category == "axe") |>
+  select(
+    Image = image,
+    Name = name,
+    Hand = hand,
+    Attack = attack,
+    Defense = defense,
+    Weight = weight,
+    Level = level_display,
+    Profession = vocation,
+    Description = description,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Attack))
+
+create_datatable(axes, image_col_width = "50px")
 ```
 
 ### Clubs
@@ -187,19 +188,26 @@ DT::datatable(weapons_data,
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(3)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+clubs <- weapons_data |>
+  filter(category == "club") |>
+  select(
+    Image = image,
+    Name = name,
+    Hand = hand,
+    Attack = attack,
+    Defense = defense,
+    Weight = weight,
+    Level = level_display,
+    Profession = vocation,
+    Description = description,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Attack))
+
+create_datatable(clubs, image_col_width = "50px")
 ```
 
 ### Ammunition
@@ -208,40 +216,49 @@ DT::datatable(weapons_data,
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(4)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+ammunition <- weapons_data |>
+  filter(category == "ammunition") |>
+  select(
+    Image = image,
+    Name = name,
+    Attack = attack,
+    Weight = weight,
+    Level = level_display,
+    Profession = vocation,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Attack))
+
+create_datatable(ammunition, image_col_width = "50px")
 ```
 
-### Distance Weapons
+### Distance
 
 ```{r}
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(5)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+distance <- weapons_data |>
+  filter(category == "distance") |>
+  select(
+    Image = image,
+    Name = name,
+    Range = range,
+    Weight = weight,
+    Level = level_display,
+    Profession = vocation,
+    Description = description,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Range), Weight)
+
+create_datatable(distance, image_col_width = "50px")
 ```
 
 ### Staffs
@@ -250,19 +267,26 @@ DT::datatable(weapons_data,
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(6)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+staffs <- weapons_data |>
+  filter(category == "staff") |>
+  arrange(desc(wand_attack), range) |>
+  select(
+    Image = image,
+    Name = name,
+    Damage = damage_display,
+    Type = damage_type,
+    Range = range,
+    Vocation = vocation,
+    Weight = weight,
+    Level = level_display,
+    Description = description,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  )
+
+create_datatable(staffs, image_col_width = "50px")
 ```
 
 ### Wands
@@ -271,19 +295,26 @@ DT::datatable(weapons_data,
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(7)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+wands <- weapons_data |>
+  filter(category == "wand") |>
+  arrange(desc(wand_attack)) |>
+  select(
+    Image = image,
+    Name = name,
+    Damage = damage_display,
+    Type = damage_type,
+    Range = range,
+    Vocation = vocation,
+    Weight = weight,
+    Level = level_display,
+    Description = description,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  )
+
+create_datatable(wands, image_col_width = "50px")
 ```
 
 ### Rods
@@ -292,19 +323,26 @@ DT::datatable(weapons_data,
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(10)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+rods <- weapons_data |>
+  filter(category == "rod") |>
+  arrange(desc(wand_attack)) |>
+  select(
+    Image = image,
+    Name = name,
+    Damage = damage_display,
+    Type = damage_type,
+    Range = range,
+    Vocation = vocation,
+    Weight = weight,
+    Level = level_display,
+    Description = description,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  )
+
+create_datatable(rods, image_col_width = "50px")
 ```
 
 ### Throwables
@@ -313,19 +351,24 @@ DT::datatable(weapons_data,
 #| warning: false
 #| echo: false
 
-weapons_data <- create_weapon_table(11)
-DT::datatable(weapons_data,
-          options = list(
-            pageLength = 25,
-            searching = TRUE,
-            ordering = TRUE,
-            columnDefs = list(
-              list(width = '50px', targets = 0)  # Image column
-            )
-          ),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = 'top')
+throwables <- weapons_data |>
+  filter(category == "throwable") |>
+  select(
+    Image = image,
+    Name = name,
+    Attack = attack,
+    Range = range,
+    `Break chance` = break_chance,
+    Defense = defense,
+    Weight = weight,
+    `Rewarded from` = rewarded_from_html,
+    `Lootable from` = lootable_from_html,
+    `Sell to` = sell_to,
+    `Buy from` = buy_from
+  ) |>
+  arrange(desc(Attack))
+
+create_datatable(throwables, image_col_width = "50px")
 ```
 
 :::

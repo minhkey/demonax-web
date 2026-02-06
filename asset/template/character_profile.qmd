@@ -239,7 +239,7 @@ DT::datatable(bestiary_data,
           escape = FALSE)
 ```
 
-### Successful harvesting
+### Harvesting
 
 ```{r}
 #| echo: false

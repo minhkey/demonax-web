@@ -26,8 +26,8 @@ website:
         href: index.qmd
       - text: "About"
         href: qmd/about.qmd
-      - text: "Help"
-        href: qmd/help.qmd
+      - text: "Getting started"
+        href: qmd/getting_started.qmd
       - text: "Community"
         menu:
           - text: "Characters"
