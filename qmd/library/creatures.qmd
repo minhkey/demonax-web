@@ -18,6 +18,7 @@ creatures <- dbReadTable(con, "creatures")
 creature_loot <- dbReadTable(con, "creature_loot")
 items <- dbReadTable(con, "items")
 item_prices <- dbReadTable(con, "item_prices")
+boss_locations <- dbReadTable(con, "boss_locations")
 
 DBI::dbDisconnect(con)
 
@@ -54,15 +55,24 @@ creature_avg_values <- creature_loot |>
 # Query creature data with loot values
 creature_data <- creatures |>
   left_join(creature_avg_values, by = c("id" = "creature_id")) |>
+  left_join(
+    boss_locations |> distinct(boss_name) |> mutate(has_location = TRUE),
+    by = c("name" = "boss_name")
+  ) |>
   mutate(
     total_avg_value = coalesce(total_avg_value, 0),
     avg_value_per_exp = ifelse(experience > 0, total_avg_value / experience, 0),
     avg_value_per_hp = ifelse(hp > 0, total_avg_value / hp, 0),
     # Calculate creature type based on article field
     # Regular creatures have "a" or "an", Bosses have empty string or NULL
-    creature_type = if_else(article != "" & !is.na(article), "Regular", "Boss")
+    creature_type = if_else(article != "" & !is.na(article), "Regular", "Boss"),
+    boss_category = case_when(
+      creature_type != "Boss" ~ "Regular",
+      !is.na(has_location) & has_location == TRUE ~ "Permanent",
+      TRUE ~ "Random"
+    )
   ) |>
-  select(name, race, hp, experience, article, creature_type, total_avg_value, avg_value_per_exp, avg_value_per_hp) |>
+  select(name, race, hp, experience, article, creature_type, boss_category, total_avg_value, avg_value_per_exp, avg_value_per_hp) |>
   arrange(desc(experience), name)
 
 # Create slug and links
@@ -92,13 +102,19 @@ creature_data <- creature_data |>
     `Avg. value per HP` = paste0(format(round(avg_value_per_hp, 3), nsmall = 3), " gp")
   )
 
-# Split into regular and boss creatures
+# Filter for regular creatures
 regular_creatures <- creature_data |>
   filter(creature_type == "Regular") |>
   select(Image, Creature, HP, Experience, `Avg. value`, `Avg. value per HP`, `Avg. value per exp`)
 
-boss_creatures <- creature_data |>
-  filter(creature_type == "Boss") |>
+# Filter for random bosses (no fixed location)
+random_bosses <- creature_data |>
+  filter(boss_category == "Random") |>
+  select(Image, Creature, HP, Experience, `Avg. value`, `Avg. value per HP`, `Avg. value per exp`)
+
+# Filter for permanent bosses (with fixed location)
+permanent_bosses <- creature_data |>
+  filter(boss_category == "Permanent") |>
   select(Image, Creature, HP, Experience, `Avg. value`, `Avg. value per HP`, `Avg. value per exp`)
 ```
 
@@ -123,13 +139,32 @@ DT::datatable(regular_creatures,
           escape = FALSE)
 ```
 
-### Bosses
+### Random bosses
 
 ```{r}
 #| echo: false
 #| warning: false
 
-DT::datatable(boss_creatures,
+DT::datatable(random_bosses,
+          options = list(
+            pageLength = 25,
+            searching = TRUE,
+            ordering = TRUE,
+            columnDefs = list(
+              list(width = '50px', targets = 0)  # Image column
+            )
+          ),
+          rownames = FALSE,
+          escape = FALSE)
+```
+
+### Permanent bosses
+
+```{r}
+#| echo: false
+#| warning: false
+
+DT::datatable(permanent_bosses,
           options = list(
             pageLength = 25,
             searching = TRUE,

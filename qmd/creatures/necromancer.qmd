@@ -23,6 +23,7 @@ creature_flags <- dbReadTable(con, "creature_flags")
 items <- dbReadTable(con, "items")
 item_prices <- dbReadTable(con, "item_prices")
 npc_locations <- dbReadTable(con, "npc_locations")
+boss_locations <- dbReadTable(con, "boss_locations")
 
 # Close database connection
 DBI::dbDisconnect(con)
@@ -41,9 +42,35 @@ generate_npc_map_link <- function(npc_name, x, y, z) {
   }, npc_name, x, y, z, USE.NAMES = FALSE)
 }
 
+# Helper function to generate boss location map link
+generate_boss_location_link <- function() {
+  if (nrow(boss_location_data) == 0) {
+    return(NULL)
+  }
+
+  x <- boss_location_data$x[1]
+  y <- boss_location_data$y[1]
+  z <- boss_location_data$z[1]
+  zoom <- 5
+
+  hash <- sprintf("#%d,%d,%d,%d?spawn=1", x, y, z, zoom)
+  url <- sprintf("/map/index.html%s", hash)
+
+  return(sprintf(
+    '<a href="%s" style="color: #cfa600; text-decoration: none; font-weight: 500; font-size: 1rem;">📍 Show boss location on map</a>',
+    url
+  ))
+}
+
 # Query 1: Creature base data
 creature <- creatures |>
   filter(id == 157)
+
+# Check if this is a boss with a location
+boss_location_data <- boss_locations |>
+  filter(boss_name == creature$name)
+
+has_boss_location <- nrow(boss_location_data) > 0
 
 # Query 2: Creature skills
 skills_data <- creature_skills |>
@@ -269,6 +296,17 @@ function handleBack(event) {
 }
 </script>
 
+```{r}
+#| echo: false
+#| results: asis
+
+if (has_boss_location) {
+  cat('<div style="margin-bottom: 1.5rem;">\n')
+  cat(generate_boss_location_link(), '\n')
+  cat('</div>\n')
+}
+```
+
 ::: {.creature-profile}
 ::: {.profile-container}
 ::: {.profile-photo}
@@ -297,7 +335,7 @@ knitr::kable(stats_data,
 #| results: asis
 
 if (!is.null(behavior_text)) {
-  cat("\n### Behavior & Traits\n\n")
+  cat("\n### Behavior\n\n")
   cat('<div class="creature-behavior">\n')
   cat(behavior_text, "\n")
   cat('</div>\n\n')

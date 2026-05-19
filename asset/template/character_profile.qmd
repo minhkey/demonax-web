@@ -154,7 +154,7 @@ profile_data <- data.frame(
     as.character(player$last_seen),
     as.character(player$level),
     format(player$experience, big.mark = ","),
-    as.character(length(quest_data)),
+    as.character(nrow(quest_data)),
     format(sum(bestiary_data_raw$kill_count), big.mark = ","),
     as.character(length(unique(bestiary_data_raw$creature_name))),
     as.character(player$magic_level),

@@ -1,0 +1,4303 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>equipment-balance</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="equipment-balance_files/libs/clipboard/clipboard.min.js"></script>
+<script src="equipment-balance_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="equipment-balance_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="equipment-balance_files/libs/quarto-html/popper.min.js"></script>
+<script src="equipment-balance_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="equipment-balance_files/libs/quarto-html/anchor.min.js"></script>
+<link href="equipment-balance_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="equipment-balance_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="equipment-balance_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="equipment-balance_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="equipment-balance_files/libs/bootstrap/bootstrap-e16ae8ed48870bdb12a5e451bf23a302.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="equipment-balance-analysis" class="level1">
+<h1>Equipment Balance Analysis</h1>
+<p><strong>Source:</strong> <code>asset/demonax-test.sqlite</code> → <code>items</code> table <strong>Analysis Date:</strong> 2026-02-17 <strong>Rendering Reference:</strong> <code>qmd/library/equipment.qmd</code></p>
+<blockquote class="blockquote">
+<p><strong>Note:</strong> Skills 6 (Shielding) and 7 (Distance) were previously not decoded in <code>equipment.qmd</code> and rendered blank — this has been fixed. Items that were affected are marked <strong>(*bug)</strong> in the catalog below for traceability. Skills 14, 16, 20, 21 remain undecoded.</p>
+</blockquote>
+<hr>
+<section id="full-equipment-catalog" class="level2">
+<h2 class="anchored" data-anchor-id="full-equipment-catalog">1. Full Equipment Catalog</h2>
+<section id="damage-type-bitfield-reference" class="level3">
+<h3 class="anchored" data-anchor-id="damage-type-bitfield-reference">Damage Type Bitfield Reference</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Bit</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Physical</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Poison</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>Fire</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>Energy</td>
+</tr>
+<tr class="odd">
+<td>32</td>
+<td>Poison (periodic)</td>
+</tr>
+<tr class="even">
+<td>64</td>
+<td>Fire (periodic)</td>
+</tr>
+<tr class="odd">
+<td>128</td>
+<td>Energy (periodic)</td>
+</tr>
+<tr class="even">
+<td>256</td>
+<td>Lifedrain</td>
+</tr>
+<tr class="odd">
+<td>512</td>
+<td>Manadrain</td>
+</tr>
+<tr class="even">
+<td>15</td>
+<td>Physical + Poison + Fire + Energy (elemental)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="profession-bitfield-reference" class="level3">
+<h3 class="anchored" data-anchor-id="profession-bitfield-reference">Profession Bitfield Reference</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Vocations</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>null / 1</td>
+<td>All vocations</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Knight</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>Paladin</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Knight, Paladin</td>
+</tr>
+<tr class="odd">
+<td>8</td>
+<td>Sorcerer</td>
+</tr>
+<tr class="even">
+<td>16</td>
+<td>Druid</td>
+</tr>
+<tr class="odd">
+<td>24</td>
+<td>Sorcerer, Druid (Mage)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="helmets-bodyposition-1" class="level3">
+<h3 class="anchored" data-anchor-id="helmets-bodyposition-1">1.1 Helmets (BodyPosition = 1)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 15%">
+<col style="width: 11%">
+<col style="width: 19%">
+<col style="width: 15%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Lvl</th>
+<th>Vocation</th>
+<th style="text-align: right;">Armor</th>
+<th>Protection</th>
+<th>Weakness</th>
+<th>Skill Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Leather Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Mystic Turban</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Post Officers Hat</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Chain Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Charmer’s Tiara</td>
+<td>—</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +2</td>
+</tr>
+<tr class="even">
+<td>Studded Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Tribal Mask</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Brass Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">3</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Legion Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">4</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Viking Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">4</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Damaged Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">5</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Iron Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">5</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Soldier Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">5</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Dark Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">6</td>
+<td>Lifedrain -10%</td>
+<td>Manadrain +9%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Dwarven Helmet</td>
+<td>—</td>
+<td>Knight</td>
+<td style="text-align: right;">6</td>
+<td>Physical -2%</td>
+<td>Energy +1%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Steel Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">6</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Strange Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">6</td>
+<td>Manadrain -5%</td>
+<td>Lifedrain +4%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Crown Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">7</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Devil Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">7</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Feather Headdress</td>
+<td>—</td>
+<td>Paladin</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>Distance +5 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Wood Cape</td>
+<td>—</td>
+<td>Paladin</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>Distance +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Hat of the Mad</td>
+<td>—</td>
+<td>Mage</td>
+<td style="text-align: right;">3</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +1</td>
+</tr>
+<tr class="odd">
+<td>Crusader Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Warrior Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Helmet of the Ancients</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Helmet of the Ancients (var.)</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">11</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Demon Helmet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Zaoan Helmet</td>
+<td>50</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">8</td>
+<td>Physical -3%</td>
+<td>Energy +2%</td>
+<td>Speed +5</td>
+</tr>
+<tr class="odd">
+<td>Glacier Mask</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">6</td>
+<td>Energy -4%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Magma Monocle</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">6</td>
+<td>Fire -4%</td>
+<td>Physical +3%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Terra Hood</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">6</td>
+<td>Physical -4%</td>
+<td>Energy +3%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Batwing Hat</td>
+<td>75</td>
+<td>Mage</td>
+<td style="text-align: right;">4</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Lightning Headband</td>
+<td>75</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">8</td>
+<td>Energy -5%</td>
+<td>Physical +4%</td>
+<td>Shielding +1 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Dragon Scale Helmet</td>
+<td>80</td>
+<td>Knight</td>
+<td style="text-align: right;">9</td>
+<td>Fire -6%</td>
+<td>Physical +5%</td>
+<td>Shielding +1 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Royal Helmet</td>
+<td>85</td>
+<td>Paladin</td>
+<td style="text-align: right;">9</td>
+<td>—</td>
+<td>Physical +9%</td>
+<td>Distance +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Maliceforged Helmet</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>Lifedrain -12%</td>
+<td>Manadrain +11%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Prismatic Helmet</td>
+<td>100</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">9</td>
+<td>Physical/Fire/Energy -6%</td>
+<td>Poison +5%</td>
+<td>Shielding +1 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Terra Helmet</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>Physical -6%</td>
+<td>Energy +5%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Tiara of Power</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>—</td>
+<td>—</td>
+<td>(skill 14 +3, undecoded)</td>
+</tr>
+<tr class="even">
+<td>Yalahari Mask</td>
+<td>100</td>
+<td>All</td>
+<td style="text-align: right;">7</td>
+<td>Manadrain -10%</td>
+<td>Lifedrain +9%</td>
+<td>Magic Level +1</td>
+</tr>
+<tr class="odd">
+<td>Demonfang Mask</td>
+<td>120</td>
+<td>Mage</td>
+<td style="text-align: right;">6</td>
+<td>Fire -5%</td>
+<td>Physical +4%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Hellstalker Visor</td>
+<td>120</td>
+<td>Knight</td>
+<td style="text-align: right;">10</td>
+<td>Fire -8%</td>
+<td>Physical +7%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Horseman Helmet</td>
+<td>120</td>
+<td>Paladin</td>
+<td style="text-align: right;">9</td>
+<td>Physical -2%</td>
+<td>—</td>
+<td>Distance +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Amazon Helmet</td>
+<td>150</td>
+<td>Paladin</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>Physical +7%</td>
+<td>Distance +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Ceremonial Mask</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="even">
+<td>Cobra Hood</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">11</td>
+<td>Fire -8%</td>
+<td>Physical +7%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Elite Draken Helmet</td>
+<td>150</td>
+<td>Paladin</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>Physical +7%</td>
+<td>Distance +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Galea Mortis</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>Manadrain -15%</td>
+<td>Lifedrain +14%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Gill Gugel</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="even">
+<td>Jade Hat</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>Poison -6%</td>
+<td>Fire +5%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Shroud of Despair</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>Energy -4%</td>
+<td>—</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="even">
+<td>Skull Helmet</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>Lifedrain -15%</td>
+<td>Manadrain +13%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Visage of the End Days</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">11</td>
+<td>Energy -8%</td>
+<td>Poison +7%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Winged Helmet</td>
+<td>150</td>
+<td>Paladin</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>Physical +5%</td>
+<td>Speed +20</td>
+</tr>
+<tr class="odd">
+<td>Demon Mengu</td>
+<td>200</td>
+<td>Paladin</td>
+<td style="text-align: right;">8</td>
+<td>Fire -10%</td>
+<td>Physical +9%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Dreadfire Headpiece</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">11</td>
+<td>Fire -12%</td>
+<td>Physical +11%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Falcon Circlet</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">9</td>
+<td>Physical/Fire -4%</td>
+<td>Energy +3%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="even">
+<td>Falcon Coif</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">12</td>
+<td>Physical/Fire -6%</td>
+<td>Energy +5%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Ferumbras’ Hat</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +12</td>
+</tr>
+<tr class="even">
+<td>Golden Helmet</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">12</td>
+<td>Physical -4%</td>
+<td>Energy +3%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Horned Helmet</td>
+<td>220</td>
+<td>Knight</td>
+<td style="text-align: right;">13</td>
+<td>Energy -10%</td>
+<td>Poison +9%</td>
+<td>Shielding +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Lion Spangenhelm</td>
+<td>220</td>
+<td>Knight</td>
+<td style="text-align: right;">13</td>
+<td>Physical -8%</td>
+<td>Energy +7%</td>
+<td>Shielding +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Eldritch Hood</td>
+<td>250</td>
+<td>Knight</td>
+<td style="text-align: right;">14</td>
+<td>Physical -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +7 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Alicorn Headguard</td>
+<td>300</td>
+<td>Paladin</td>
+<td style="text-align: right;">11</td>
+<td>Elemental -5%</td>
+<td>Physical +4%</td>
+<td>Distance +3 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Arcanomancer Regalia</td>
+<td>350</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>Elemental -5%</td>
+<td>Physical +4%</td>
+<td>Magic Level +8</td>
+</tr>
+<tr class="even">
+<td>Spirithorn Helmet</td>
+<td>350</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Physical/Fire -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +8 <strong>(*bug)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="necklaces-bodyposition-2" class="level3">
+<h3 class="anchored" data-anchor-id="necklaces-bodyposition-2">1.2 Necklaces (BodyPosition = 2)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 15%">
+<col style="width: 11%">
+<col style="width: 19%">
+<col style="width: 15%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Lvl</th>
+<th>Vocation</th>
+<th style="text-align: right;">Armor</th>
+<th>Protection</th>
+<th>Weakness</th>
+<th>Skill Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Bronze Necklace</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Crystal Necklace</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +1</td>
+</tr>
+<tr class="odd">
+<td>Bronze Amulet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Manadrain -20%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Dragon Necklace</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Fire -10%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Elven Amulet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Elemental -10%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Garlic Necklace</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Lifedrain -20%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Platinum Amulet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Protection Amulet</td>
+<td>—</td>
+<td>Knight</td>
+<td style="text-align: right;">—</td>
+<td>Physical -15%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Scarf</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Silver Amulet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Poison -10%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Silver Necklace</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Lifedrain -10%</td>
+<td>Manadrain +9%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Stone Skin Amulet</td>
+<td>—</td>
+<td>Knight</td>
+<td style="text-align: right;">—</td>
+<td>Physical -80%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Strange Talisman</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Energy -10%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Star Amulet</td>
+<td>45</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(special +3, undecoded)</td>
+</tr>
+<tr class="odd">
+<td>Gill Necklace</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Physical -20%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Glacier Amulet</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Energy -20%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Spider Amulet</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Poison -20%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Lightning Pendant</td>
+<td>75</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">—</td>
+<td>Energy -15%</td>
+<td>Physical +12%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Ruby Necklace</td>
+<td>80</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(skill 2 +2, undecoded)</td>
+</tr>
+<tr class="even">
+<td>Ancient Amulet</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Poison -10%</td>
+<td>Fire +9%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Demonbone Amulet</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Manadrain -10%</td>
+<td>Lifedrain +9%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Enchanted Diamond Necklace</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="odd">
+<td>Magma Amulet</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Fire -10%</td>
+<td>Physical +8%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Prismatic Necklace</td>
+<td>100</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">—</td>
+<td>Physical/Fire/Energy -15%</td>
+<td>Poison +12%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Terra Amulet</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Physical -20%</td>
+<td>Energy +16%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Lion Amulet</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">3</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Shielding +3 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Onyx Pendant</td>
+<td>150</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">3</td>
+<td>Physical -3%</td>
+<td>—</td>
+<td>Shielding +1 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Pendulum of Hope</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Energy -5%</td>
+<td>Poison +4%</td>
+<td>Magic Level +5</td>
+</tr>
+<tr class="odd">
+<td>The Cobra Amulet</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">4</td>
+<td>Fire -5%</td>
+<td>Physical +4%</td>
+<td>Shielding +3 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Golden Hyaena Necklace</td>
+<td>250</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Magic Level +8</td>
+</tr>
+<tr class="odd">
+<td>Ferumbras’ Necklace</td>
+<td>300</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Elemental -5%</td>
+<td>Physical +4%</td>
+<td>Magic Level +10</td>
+</tr>
+<tr class="even">
+<td>The Covenant of Death</td>
+<td>350</td>
+<td>Knight</td>
+<td style="text-align: right;">5</td>
+<td>Physical/Fire -5%</td>
+<td>Energy +4%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="armors-bodyposition-4" class="level3">
+<h3 class="anchored" data-anchor-id="armors-bodyposition-4">1.3 Armors (BodyPosition = 4)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 15%">
+<col style="width: 11%">
+<col style="width: 19%">
+<col style="width: 15%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Lvl</th>
+<th>Vocation</th>
+<th style="text-align: right;">Armor</th>
+<th>Protection</th>
+<th>Weakness</th>
+<th>Skill Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Cape</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Coat</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Jacket</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Red Robe</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Doublet</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Studded Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">5</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Leather Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">4</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Chain Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">6</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Green Tunic</td>
+<td>—</td>
+<td>Paladin</td>
+<td style="text-align: right;">4</td>
+<td>—</td>
+<td>Physical +9%</td>
+<td>Distance +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Leaf Robe</td>
+<td>—</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>Poison -2%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Magician’s Robe</td>
+<td>—</td>
+<td>Mage</td>
+<td style="text-align: right;">6</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +2</td>
+</tr>
+<tr class="even">
+<td>Magma Robe</td>
+<td>—</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>Fire +2%</td>
+<td>Physical +1%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Red Tunic</td>
+<td>—</td>
+<td>Paladin</td>
+<td style="text-align: right;">9</td>
+<td>—</td>
+<td>Physical +7%</td>
+<td>Distance +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Scale Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">9</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Sparkling Robe</td>
+<td>—</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>Energy +2%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Plate Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Blue Robe</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">11</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Kaftan</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">11</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Noble Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">11</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Decorated Plate Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Light Plate Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Dark Armor</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">10</td>
+<td>Lifedrain -5%</td>
+<td>Manadrain +4%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Dwarven Armor</td>
+<td>—</td>
+<td>Knight</td>
+<td style="text-align: right;">10</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Leopard Armor</td>
+<td>—</td>
+<td>Knight</td>
+<td style="text-align: right;">13</td>
+<td>Poison -10%</td>
+<td>Fire +9%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Ethno Coat</td>
+<td>20</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="even">
+<td>Knight Armor</td>
+<td>40</td>
+<td>Knight</td>
+<td style="text-align: right;">12</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Native Armor</td>
+<td>45</td>
+<td>Knight</td>
+<td style="text-align: right;">14</td>
+<td>Energy -5%</td>
+<td>Poison +4%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Spirit Cloak</td>
+<td>45</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Zaoan Armor</td>
+<td>50</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">13</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Speed +10</td>
+</tr>
+<tr class="even">
+<td>Glacier Robe</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>Energy -4%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Magma Coat</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>Fire -4%</td>
+<td>Physical +3%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Terra Mantle</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>Physical -4%</td>
+<td>Energy +3%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Death Oyoroi</td>
+<td>65</td>
+<td>Mage</td>
+<td style="text-align: right;">11</td>
+<td>Manadrain -10%</td>
+<td>Lifedrain +9%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Elven Mail</td>
+<td>65</td>
+<td>Paladin</td>
+<td style="text-align: right;">12</td>
+<td>Physical -2%</td>
+<td>—</td>
+<td>Distance +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Belted Cape</td>
+<td>75</td>
+<td>Paladin</td>
+<td style="text-align: right;">14</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Distance +1 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Crown Armor</td>
+<td>75</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">14</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Focus Cape</td>
+<td>75</td>
+<td>Mage</td>
+<td style="text-align: right;">9</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +8</td>
+</tr>
+<tr class="even">
+<td>Lightning Robe</td>
+<td>75</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">14</td>
+<td>Energy -10%</td>
+<td>Physical +9%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Skullcracker Armor</td>
+<td>75</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">15</td>
+<td>Lifedrain -30%</td>
+<td>Manadrain +30%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Cloak of Deception</td>
+<td>80</td>
+<td>Paladin</td>
+<td style="text-align: right;">13</td>
+<td>—</td>
+<td>Physical +10%</td>
+<td>Distance +8 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Dragon Scale Mail</td>
+<td>80</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Fire -15%</td>
+<td>Physical +14%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Calopteryx Cape</td>
+<td>85</td>
+<td>Mage</td>
+<td style="text-align: right;">11</td>
+<td>Fire -4%</td>
+<td>—</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="odd">
+<td>Dark Lord’s Cape</td>
+<td>85</td>
+<td>Mage</td>
+<td style="text-align: right;">11</td>
+<td>Lifedrain -25%</td>
+<td>Manadrain +24%</td>
+<td>Magic Level +2</td>
+</tr>
+<tr class="even">
+<td>Ranger’s Cloak</td>
+<td>85</td>
+<td>Paladin</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>Physical +9%</td>
+<td>Distance +14 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Robe of the Underworld</td>
+<td>85</td>
+<td>Mage</td>
+<td style="text-align: right;">11</td>
+<td>Manadrain -25%</td>
+<td>Lifedrain +23%</td>
+<td>Magic Level +2</td>
+</tr>
+<tr class="even">
+<td>Velvet Mantle</td>
+<td>85</td>
+<td>Mage</td>
+<td style="text-align: right;">11</td>
+<td>Energy -4%</td>
+<td>—</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="odd">
+<td>Earthborn Titan Armor</td>
+<td>100</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Poison -12%</td>
+<td>Fire +11%</td>
+<td>Axe +4</td>
+</tr>
+<tr class="even">
+<td>Elite Draken Mail</td>
+<td>100</td>
+<td>Paladin</td>
+<td style="text-align: right;">15</td>
+<td>—</td>
+<td>Physical +9%</td>
+<td>Distance +10 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Fireborn Giant Armor</td>
+<td>100</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Fire -12%</td>
+<td>Physical +11%</td>
+<td>Club +4</td>
+</tr>
+<tr class="even">
+<td>Golden Armor</td>
+<td>100</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Physical -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Magic Plate Armor</td>
+<td>100</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">17</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Paladin Armor</td>
+<td>100</td>
+<td>Paladin</td>
+<td style="text-align: right;">14</td>
+<td>—</td>
+<td>Physical +8%</td>
+<td>Distance +10 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Prismatic Armor</td>
+<td>100</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">15</td>
+<td>Physical/Fire/Energy -10%</td>
+<td>Poison +9%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Spellweaver’s Robe</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +10</td>
+</tr>
+<tr class="odd">
+<td>Warrior Oyoroi</td>
+<td>100</td>
+<td>Knight</td>
+<td style="text-align: right;">17</td>
+<td>Physical -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +5 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Windborn Colossus Armor</td>
+<td>100</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Energy -12%</td>
+<td>Poison +11%</td>
+<td>Club +4</td>
+</tr>
+<tr class="odd">
+<td>Yalahari Armor</td>
+<td>100</td>
+<td>All</td>
+<td style="text-align: right;">13</td>
+<td>Manadrain -25%</td>
+<td>Lifedrain +24%</td>
+<td>Magic Level +1</td>
+</tr>
+<tr class="even">
+<td>Demon Armor</td>
+<td>100</td>
+<td>All</td>
+<td style="text-align: right;">16</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Swampland Chestplate</td>
+<td>120</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Poison -15%</td>
+<td>Fire +13%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Voltage Armor</td>
+<td>120</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Energy -15%</td>
+<td>Poison +14%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Dauntless Dragon Scale Mail</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">18</td>
+<td>Fire -10%</td>
+<td>Physical +9%</td>
+<td>Club +8</td>
+</tr>
+<tr class="even">
+<td>Dragon Robe</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">12</td>
+<td>Fire -6%</td>
+<td>Physical +5%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Frost Armor</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">15</td>
+<td>Energy -20%</td>
+<td>Poison +19%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Furious Frock</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">12</td>
+<td>Energy -6%</td>
+<td>Poison +5%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Gill Coat</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">12</td>
+<td>Physical -6%</td>
+<td>Energy +5%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="even">
+<td>Greenwood Coat</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">12</td>
+<td>Poison -6%</td>
+<td>Fire +5%</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Ornate Chestplate</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">19</td>
+<td>Physical -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Spellbinder’s Robe</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">10</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +12</td>
+</tr>
+<tr class="odd">
+<td>Arcane Dragon Robe</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">14</td>
+<td>Fire -8%</td>
+<td>Physical +7%</td>
+<td>Magic Level +8</td>
+</tr>
+<tr class="even">
+<td>Bear Skin</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">14</td>
+<td>Poison -8%</td>
+<td>Fire +7%</td>
+<td>Magic Level +8</td>
+</tr>
+<tr class="odd">
+<td>Divine Armor</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">22</td>
+<td>Physical/Energy -15%</td>
+<td>Fire +14%</td>
+<td>Shielding +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Earthheart Cuirass</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Poison -20%</td>
+<td>Fire +19%</td>
+<td>Axe +10</td>
+</tr>
+<tr class="odd">
+<td>Earthheart Hauberk</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Poison -20%</td>
+<td>Fire +18%</td>
+<td>Axe +10</td>
+</tr>
+<tr class="even">
+<td>Earthheart Platemail</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Poison -20%</td>
+<td>Fire +18%</td>
+<td>Club +10</td>
+</tr>
+<tr class="odd">
+<td>Earthsoul Tabard</td>
+<td>200</td>
+<td>Paladin</td>
+<td style="text-align: right;">18</td>
+<td>Poison -8%</td>
+<td>Physical/Fire +7%</td>
+<td>Distance +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Falcon Plate</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">22</td>
+<td>Physical/Fire -15%</td>
+<td>Energy +14%</td>
+<td>Shielding +6 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Fireheart Cuirass</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Fire -20%</td>
+<td>Physical +18%</td>
+<td>Club +10</td>
+</tr>
+<tr class="even">
+<td>Fireheart Hauberk</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Fire -20%</td>
+<td>Physical +19%</td>
+<td>Club +10</td>
+</tr>
+<tr class="odd">
+<td>Fireheart Platemail</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Fire -20%</td>
+<td>Physical +18%</td>
+<td>Club +10</td>
+</tr>
+<tr class="even">
+<td>Firesoul Tabard</td>
+<td>200</td>
+<td>Paladin</td>
+<td style="text-align: right;">18</td>
+<td>Fire -8%</td>
+<td>Physical +7%</td>
+<td>Distance +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Master Archer’s Armor</td>
+<td>200</td>
+<td>Paladin</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>Physical +5%</td>
+<td>Distance +20 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Pathfinder Chestplate</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">12</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +14</td>
+</tr>
+<tr class="odd">
+<td>Robe of the Ice Queen</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">14</td>
+<td>Energy -8%</td>
+<td>Poison +7%</td>
+<td>Shielding +8 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Thunderheart Cuirass</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Energy -20%</td>
+<td>Poison +19%</td>
+<td>Club +10</td>
+</tr>
+<tr class="odd">
+<td>Thunderheart Hauberk</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Energy -20%</td>
+<td>Poison +19%</td>
+<td>Club +10</td>
+</tr>
+<tr class="even">
+<td>Thunderheart Platemail</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">20</td>
+<td>Energy -20%</td>
+<td>Poison +18%</td>
+<td>Club +10</td>
+</tr>
+<tr class="odd">
+<td>Thundersoul Tabard</td>
+<td>200</td>
+<td>Paladin</td>
+<td style="text-align: right;">18</td>
+<td>Energy -8%</td>
+<td>Physical/Poison +7%</td>
+<td>Distance +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Lion Chestplate</td>
+<td>220</td>
+<td>Knight</td>
+<td style="text-align: right;">23</td>
+<td>Physical -20%</td>
+<td>Energy +18%</td>
+<td>Shielding +8 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Earthmind Raiment</td>
+<td>250</td>
+<td>Mage</td>
+<td style="text-align: right;">15</td>
+<td>Poison -8%</td>
+<td>Fire +7%</td>
+<td>Magic Level +10</td>
+</tr>
+<tr class="even">
+<td>Eldritch Cuirass</td>
+<td>250</td>
+<td>Knight</td>
+<td style="text-align: right;">24</td>
+<td>Physical -20%</td>
+<td>Energy +18%</td>
+<td>Shielding +8 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Firemind Raiment</td>
+<td>250</td>
+<td>Mage</td>
+<td style="text-align: right;">15</td>
+<td>Fire -8%</td>
+<td>Physical +7%</td>
+<td>Magic Level +10</td>
+</tr>
+<tr class="even">
+<td>Shroud of Wisdom</td>
+<td>250</td>
+<td>Mage</td>
+<td style="text-align: right;">16</td>
+<td>Energy -13%</td>
+<td>Poison +11%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Thundermind Raiment</td>
+<td>250</td>
+<td>Mage</td>
+<td style="text-align: right;">15</td>
+<td>Energy -8%</td>
+<td>Poison +7%</td>
+<td>Magic Level +10</td>
+</tr>
+<tr class="even">
+<td>Amazon Armor</td>
+<td>300</td>
+<td>Paladin</td>
+<td style="text-align: right;">16</td>
+<td>—</td>
+<td>Physical +5%</td>
+<td>Distance +20 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Crystalline Armor</td>
+<td>300</td>
+<td>Knight</td>
+<td style="text-align: right;">25</td>
+<td>Energy -25%</td>
+<td>Poison +23%</td>
+<td>Shielding +10 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Lavos Armor</td>
+<td>300</td>
+<td>Knight</td>
+<td style="text-align: right;">25</td>
+<td>Fire -25%</td>
+<td>Physical +24%</td>
+<td>Shielding +10 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Dawnfire Sherwani</td>
+<td>350</td>
+<td>Mage</td>
+<td style="text-align: right;">16</td>
+<td>Fire -13%</td>
+<td>Physical +12%</td>
+<td>Magic Level +12</td>
+</tr>
+<tr class="even">
+<td>Dream Shroud</td>
+<td>350</td>
+<td>Mage</td>
+<td style="text-align: right;">16</td>
+<td>Energy -13%</td>
+<td>Poison +11%</td>
+<td>Magic Level +12</td>
+</tr>
+<tr class="odd">
+<td>Spirithorn Armor</td>
+<td>350</td>
+<td>Knight</td>
+<td style="text-align: right;">25</td>
+<td>Physical/Fire -25%</td>
+<td>Energy +23%</td>
+<td>Shielding +10 <strong>(*bug)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="legs-bodyposition-7" class="level3">
+<h3 class="anchored" data-anchor-id="legs-bodyposition-7">1.4 Legs (BodyPosition = 7)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 15%">
+<col style="width: 11%">
+<col style="width: 19%">
+<col style="width: 15%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Lvl</th>
+<th>Vocation</th>
+<th style="text-align: right;">Armor</th>
+<th>Protection</th>
+<th>Weakness</th>
+<th>Skill Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Leather Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Chain Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">3</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Studded Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Brass Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">5</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Dwarven Legs</td>
+<td>—</td>
+<td>Knight</td>
+<td style="text-align: right;">7</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Leaf Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">7</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Plate Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">7</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Vermin Legs</td>
+<td>—</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>Poison -2%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Bast Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Blue Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Crown Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Jungle Legs</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">8</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Knight Legs</td>
+<td>40</td>
+<td>Knight</td>
+<td style="text-align: right;">8</td>
+<td>Physical -5%</td>
+<td>—</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Zaoan Legs</td>
+<td>50</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">7</td>
+<td>Physical -2%</td>
+<td>Energy +1%</td>
+<td>Speed +10</td>
+</tr>
+<tr class="odd">
+<td>Glacier Kilt</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>Energy -4%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Magma Legs</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>Fire -4%</td>
+<td>Physical +3%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Terra Legs</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>Physical -4%</td>
+<td>Energy +3%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Elven Legs</td>
+<td>65</td>
+<td>Paladin</td>
+<td style="text-align: right;">7</td>
+<td>Physical -2%</td>
+<td>—</td>
+<td>Distance +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Grasshopper Legs</td>
+<td>75</td>
+<td>All</td>
+<td style="text-align: right;">6</td>
+<td>—</td>
+<td>Physical +8%</td>
+<td>Speed +25</td>
+</tr>
+<tr class="even">
+<td>Lightning Legs</td>
+<td>75</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">8</td>
+<td>Energy -10%</td>
+<td>Physical +9%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Dragon Scale Legs</td>
+<td>80</td>
+<td>Knight</td>
+<td style="text-align: right;">8</td>
+<td>Fire -12%</td>
+<td>Physical +11%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Bone Skirt</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>Manadrain -6%</td>
+<td>Lifedrain +5%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Demon Legs</td>
+<td>100</td>
+<td>All</td>
+<td style="text-align: right;">9</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Golden Legs</td>
+<td>100</td>
+<td>Knight</td>
+<td style="text-align: right;">9</td>
+<td>Physical -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Jade Legs</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>Poison -6%</td>
+<td>Fire +5%</td>
+<td>Magic Level +2</td>
+</tr>
+<tr class="even">
+<td>Prismatic Legs</td>
+<td>100</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">9</td>
+<td>Physical/Fire/Energy -10%</td>
+<td>Poison +9%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Yalahari Legpiece</td>
+<td>100</td>
+<td>All</td>
+<td style="text-align: right;">7</td>
+<td>Manadrain -15%</td>
+<td>Lifedrain +14%</td>
+<td>Magic Level +1</td>
+</tr>
+<tr class="even">
+<td>Gill Legs</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="odd">
+<td>Ornate Legs</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">10</td>
+<td>Physical -12%</td>
+<td>Energy +11%</td>
+<td>Shielding +3 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Pathfinder Fleshguards</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">8</td>
+<td>Fire -4%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Pathfinder Legs</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">7</td>
+<td>Energy -18%</td>
+<td>Poison +17%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Pirate Legs</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">7</td>
+<td>Poison -7%</td>
+<td>Fire +6%</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="odd">
+<td>Soulful Legs</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">10</td>
+<td>Energy -15%</td>
+<td>Poison +14%</td>
+<td>Shielding +3 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Cast Iron Legs</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">11</td>
+<td>Physical -15%</td>
+<td>Energy +13%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Falcon Greaves</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">11</td>
+<td>Physical/Fire -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Eldritch Breeches</td>
+<td>250</td>
+<td>Knight</td>
+<td style="text-align: right;">12</td>
+<td>Physical -15%</td>
+<td>Energy +14%</td>
+<td>Shielding +6 <strong>(*bug)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="boots-bodyposition-8" class="level3">
+<h3 class="anchored" data-anchor-id="boots-bodyposition-8">1.5 Boots (BodyPosition = 8)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 15%">
+<col style="width: 11%">
+<col style="width: 19%">
+<col style="width: 15%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Lvl</th>
+<th>Vocation</th>
+<th style="text-align: right;">Armor</th>
+<th>Protection</th>
+<th>Weakness</th>
+<th>Skill Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sandals</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Leather Boots</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Patched Boots</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Desert Footwraps</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>Poison +2%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Coconut Shoes</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>Physical +10%</td>
+<td>Speed +10</td>
+</tr>
+<tr class="even">
+<td>Crocodile Boots</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>—</td>
+<td>Physical +8%</td>
+<td>Speed +10</td>
+</tr>
+<tr class="odd">
+<td>Soft Boots</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(Regen, undecoded)</td>
+</tr>
+<tr class="even">
+<td>Firewalker Boots</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Fire -20%</td>
+<td>Physical +19%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Badger Boots</td>
+<td>40</td>
+<td>All</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>Physical +6%</td>
+<td>Speed +15</td>
+</tr>
+<tr class="even">
+<td>Desert Sandals</td>
+<td>40</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>Poison -4%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Zaoan Shoes</td>
+<td>50</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">1</td>
+<td>Physical -2%</td>
+<td>Energy +1%</td>
+<td>Speed +5</td>
+</tr>
+<tr class="even">
+<td>Glacier Shoes</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Energy -2%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Magma Boots</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Fire -2%</td>
+<td>Physical +1%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Terra Boots</td>
+<td>60</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Physical -2%</td>
+<td>Energy +1%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Steel Boots</td>
+<td>65</td>
+<td>Knight</td>
+<td style="text-align: right;">3</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Boots of Haste</td>
+<td>75</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>Physical +7%</td>
+<td>Speed +20</td>
+</tr>
+<tr class="odd">
+<td>Lightning Boots</td>
+<td>75</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">2</td>
+<td>Energy -5%</td>
+<td>Physical +4%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Desert Boots</td>
+<td>80</td>
+<td>Knight</td>
+<td style="text-align: right;">2</td>
+<td>Poison -6%</td>
+<td>Fire +5%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Dragon Scale Boots</td>
+<td>80</td>
+<td>Knight</td>
+<td style="text-align: right;">3</td>
+<td>Fire -5%</td>
+<td>Physical +4%</td>
+<td>Shielding +1 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Enchanted Sandals</td>
+<td>80</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Energy -4%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Yalahari Boots</td>
+<td>80</td>
+<td>All</td>
+<td style="text-align: right;">1</td>
+<td>Manadrain -4%</td>
+<td>Lifedrain +3%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Bone Boots</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Manadrain -6%</td>
+<td>Lifedrain +5%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Guardian Boots</td>
+<td>100</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">3</td>
+<td>Energy -5%</td>
+<td>Poison +4%</td>
+<td>Shielding +1 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Makeshift Boots</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Fire -4%</td>
+<td>—</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="odd">
+<td>Oriental Shoes</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Poison -4%</td>
+<td>—</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="even">
+<td>Pair of Nightmare Boots</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Energy -4%</td>
+<td>—</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="odd">
+<td>Prismatic Boots</td>
+<td>100</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">3</td>
+<td>Physical/Fire/Energy -5%</td>
+<td>Poison +4%</td>
+<td>Shielding +1 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Vampire Silk Slippers</td>
+<td>100</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>Physical +7%</td>
+<td>Speed +25</td>
+</tr>
+<tr class="odd">
+<td>Winged Boots</td>
+<td>100</td>
+<td>Paladin</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>Physical +6%</td>
+<td>Speed +20</td>
+</tr>
+<tr class="even">
+<td>Alchemist’s Boots</td>
+<td>150</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Physical -4%</td>
+<td>—</td>
+<td>Magic Level +4</td>
+</tr>
+<tr class="odd">
+<td>Cobra Boots</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">4</td>
+<td>Fire -5%</td>
+<td>Physical +4%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Draken Boots</td>
+<td>150</td>
+<td>Paladin</td>
+<td style="text-align: right;">3</td>
+<td>—</td>
+<td>Physical +8%</td>
+<td>Speed +20</td>
+</tr>
+<tr class="odd">
+<td>Golden Boots</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">4</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Heavy Swampland Boots</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">4</td>
+<td>Poison -10%</td>
+<td>Fire +9%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Void Boots</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">4</td>
+<td>Energy -15%</td>
+<td>Poison +14%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Cast Iron Boots</td>
+<td>200</td>
+<td>Knight</td>
+<td style="text-align: right;">5</td>
+<td>Physical -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Pathfinder Stompers</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>Fire -6%</td>
+<td>Physical +5%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Frostflower Boots</td>
+<td>250</td>
+<td>Knight</td>
+<td style="text-align: right;">5</td>
+<td>Physical/Energy -8%</td>
+<td>Fire +7%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Pair of Dreamwalkers</td>
+<td>250</td>
+<td>Mage</td>
+<td style="text-align: right;">2</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +8</td>
+</tr>
+<tr class="even">
+<td>Pair of Soulwalkers</td>
+<td>250</td>
+<td>Knight</td>
+<td style="text-align: right;">5</td>
+<td>Physical/Fire/Energy -8%</td>
+<td>Energy +7%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Treader of Torment</td>
+<td>300</td>
+<td>Knight</td>
+<td style="text-align: right;">6</td>
+<td>Physical -10%</td>
+<td>Energy +9%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="rings-bodyposition-9" class="level3">
+<h3 class="anchored" data-anchor-id="rings-bodyposition-9">1.6 Rings (BodyPosition = 9)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 15%">
+<col style="width: 11%">
+<col style="width: 19%">
+<col style="width: 15%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Lvl</th>
+<th>Vocation</th>
+<th style="text-align: right;">Armor</th>
+<th>Protection</th>
+<th>Weakness</th>
+<th>Skill Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Axe Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Axe +8</td>
+</tr>
+<tr class="even">
+<td>Club Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Club +8</td>
+</tr>
+<tr class="odd">
+<td>Sword Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Sword +8</td>
+</tr>
+<tr class="even">
+<td>Crystal Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +1</td>
+</tr>
+<tr class="odd">
+<td>Magic Ring</td>
+<td>—</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +10</td>
+</tr>
+<tr class="even">
+<td>Might Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Elemental -25%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Time Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>Physical +6%</td>
+<td>Speed +30</td>
+</tr>
+<tr class="even">
+<td>Life Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(Regen, undecoded)</td>
+</tr>
+<tr class="odd">
+<td>Ring of Healing</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(Regen, undecoded)</td>
+</tr>
+<tr class="even">
+<td>Energy Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(special, undecoded)</td>
+</tr>
+<tr class="odd">
+<td>Dwarven Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(special, undecoded)</td>
+</tr>
+<tr class="even">
+<td>Stealth Ring</td>
+<td>—</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(Stealth, undecoded)</td>
+</tr>
+<tr class="odd">
+<td>Star Ring</td>
+<td>45</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>(special +3, undecoded)</td>
+</tr>
+<tr class="even">
+<td>Elven Brooch</td>
+<td>45</td>
+<td>Paladin</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>Physical +5%</td>
+<td>Distance +5 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Butterfly Ring</td>
+<td>85</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Energy -4%</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Ring of Fire</td>
+<td>85</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>Fire -99%</td>
+<td>Physical +99%</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Prismatic Ring</td>
+<td>100</td>
+<td>Knight, Paladin</td>
+<td style="text-align: right;">—</td>
+<td>Physical/Fire/Energy -10%</td>
+<td>Poison +9%</td>
+<td>Shielding +10 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Ring of the Sky</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +8</td>
+</tr>
+<tr class="odd">
+<td>Vampire’s Signet Ring</td>
+<td>100</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Lifedrain -15%</td>
+<td>Manadrain +13%</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Gold Ring</td>
+<td>150</td>
+<td>All</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Magic Level +2</td>
+</tr>
+<tr class="odd">
+<td>The Ring of the Igniter</td>
+<td>150</td>
+<td>Knight</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>—</td>
+<td>Sword +10</td>
+</tr>
+<tr class="even">
+<td>Ring of Secret Thoughts</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Energy -10%</td>
+<td>Poison +9%</td>
+<td>Magic Level +10</td>
+</tr>
+<tr class="odd">
+<td>Skull Ring</td>
+<td>200</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Physical/Fire -10%</td>
+<td>Energy +9%</td>
+<td>Magic Level +10</td>
+</tr>
+<tr class="even">
+<td>Lion Ring</td>
+<td>220</td>
+<td>Knight</td>
+<td style="text-align: right;">—</td>
+<td>Physical -5%</td>
+<td>Energy +4%</td>
+<td>Shielding +2 <strong>(*bug)</strong></td>
+</tr>
+<tr class="odd">
+<td>Alicorn Ring</td>
+<td>350</td>
+<td>Paladin</td>
+<td style="text-align: right;">—</td>
+<td>Elemental -4%</td>
+<td>—</td>
+<td>Distance +4 <strong>(*bug)</strong></td>
+</tr>
+<tr class="even">
+<td>Arcanomancer Sigill</td>
+<td>350</td>
+<td>Mage</td>
+<td style="text-align: right;">—</td>
+<td>Elemental -4%</td>
+<td>—</td>
+<td>Magic Level +6</td>
+</tr>
+<tr class="odd">
+<td>Spirithorn Ring</td>
+<td>350</td>
+<td>Knight</td>
+<td style="text-align: right;">2</td>
+<td>Physical/Fire -5%</td>
+<td>Energy +4%</td>
+<td>Shielding +4 <strong>(*bug)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+</section>
+<section id="best-in-slot-summary" class="level2">
+<h2 class="anchored" data-anchor-id="best-in-slot-summary">2. Best-in-Slot Summary</h2>
+<section id="maximum-armor-per-slot-at-level-350" class="level3">
+<h3 class="anchored" data-anchor-id="maximum-armor-per-slot-at-level-350">2.1 Maximum Armor Per Slot (at level 350)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 27%">
+<col style="width: 31%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Slot</th>
+<th>Knight</th>
+<th>Paladin</th>
+<th>Mage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Helmet</td>
+<td>Spirithorn Helmet <strong>15</strong></td>
+<td>Alicorn Headguard <strong>11</strong></td>
+<td>Arcanomancer Regalia <strong>10</strong></td>
+</tr>
+<tr class="even">
+<td>Necklace</td>
+<td>The Covenant of Death <strong>5</strong></td>
+<td>— <strong>0</strong></td>
+<td>— <strong>0</strong></td>
+</tr>
+<tr class="odd">
+<td>Armor</td>
+<td>Spirithorn Armor <strong>25</strong></td>
+<td>Amazon Armor <strong>16</strong></td>
+<td>Dawnfire Sherwani / Dream Shroud <strong>16</strong></td>
+</tr>
+<tr class="even">
+<td>Legs</td>
+<td>Eldritch Breeches <strong>12</strong></td>
+<td>Elven Legs <strong>7</strong> (lvl 65!)</td>
+<td>Pathfinder Fleshguards <strong>8</strong></td>
+</tr>
+<tr class="odd">
+<td>Boots</td>
+<td>Treader of Torment <strong>6</strong></td>
+<td>Draken Boots <strong>3</strong></td>
+<td>Pair of Dreamwalkers <strong>2</strong></td>
+</tr>
+<tr class="even">
+<td>Ring</td>
+<td>Spirithorn Ring <strong>2</strong></td>
+<td>— <strong>0</strong></td>
+<td>— <strong>0</strong></td>
+</tr>
+<tr class="odd">
+<td><strong>Total</strong></td>
+<td><strong>65</strong></td>
+<td><strong>37</strong></td>
+<td><strong>36</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Note:</strong> Paladin and Mage legs above are far below the highest available level — the best leveled items are from 65 and 150 respectively, compared to 250 for Knight.</p>
+</blockquote>
+</section>
+<section id="maximum-skill-boost-per-vocation-best-in-slot-stacking" class="level3">
+<h3 class="anchored" data-anchor-id="maximum-skill-boost-per-vocation-best-in-slot-stacking">2.2 Maximum Skill Boost Per Vocation (Best-in-Slot stacking)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Vocation</th>
+<th>Skill</th>
+<th>Helm</th>
+<th>Armor</th>
+<th>Legs</th>
+<th>Boots</th>
+<th>Neck</th>
+<th>Ring</th>
+<th><strong>Total</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Knight</td>
+<td>Shielding <strong>(*bug)</strong></td>
+<td>+8 (Spirithorn)</td>
+<td>+10 (Spirithorn)</td>
+<td>+6 (Eldritch)</td>
+<td>+4 (Treader)</td>
+<td>+4 (Covenant)</td>
+<td>+4 (Spirithorn Ring)</td>
+<td><strong>+36</strong></td>
+</tr>
+<tr class="even">
+<td>Knight</td>
+<td>Sword</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>+10 (Ring of Igniter)</td>
+<td><strong>+10</strong></td>
+</tr>
+<tr class="odd">
+<td>Knight</td>
+<td>Club</td>
+<td>—</td>
+<td>+10 (Earthheart/Fireheart/Thunder)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td><strong>+10</strong></td>
+</tr>
+<tr class="even">
+<td>Knight</td>
+<td>Axe</td>
+<td>—</td>
+<td>+10 (Earthheart)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td><strong>+10</strong></td>
+</tr>
+<tr class="odd">
+<td>Paladin</td>
+<td>Distance <strong>(*bug)</strong></td>
+<td>+3 (Alicorn HG)</td>
+<td>+20 (Amazon Armor)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>+4 (Alicorn Ring)</td>
+<td><strong>+27</strong></td>
+</tr>
+<tr class="even">
+<td>Paladin</td>
+<td>Speed</td>
+<td>+20 (Winged)</td>
+<td>+10 (Zaoan)</td>
+<td>+25 (Grasshopper)</td>
+<td>+20 (Draken)</td>
+<td>—</td>
+<td>—</td>
+<td><strong>+75</strong></td>
+</tr>
+<tr class="odd">
+<td>Mage</td>
+<td>Magic Level</td>
+<td>+12 (Ferumbras’)</td>
+<td>+12 (Spellbinder/Dawnfire/Dream)</td>
+<td>+4 (Gill/Pirate)</td>
+<td>+8 (Dreamwalkers)</td>
+<td>+10 (Ferumbras’ Neck)</td>
+<td>+10 (Ring of Secret/Skull)</td>
+<td><strong>+56</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Paladin Speed note:</strong> Ferumbras’ Hat (lvl 200) gives ML+12 vs Arcanomancer Regalia (lvl 350) at ML+8 — the lower-level item wins on the skill boost, trading armor (1 vs 10). The total of <strong>+56</strong> uses Ferumbras’ Hat; using Arcanomancer Regalia gives <strong>+52</strong>.</p>
+</blockquote>
+<blockquote class="blockquote">
+<p><strong>Mage ML note:</strong> Ring of Secret Thoughts and Skull Ring are both Mage, level 200, and both give ML+10. Arcanomancer Sigill (level 350) only gives ML+6, making it strictly worse for stacking.</p>
+</blockquote>
+</section>
+<section id="maximum-protection-per-vocation-single-element-best-in-slot" class="level3">
+<h3 class="anchored" data-anchor-id="maximum-protection-per-vocation-single-element-best-in-slot">2.3 Maximum Protection Per Vocation (single element, best-in-slot)</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 25%">
+<col style="width: 28%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Element</th>
+<th>Knight</th>
+<th>Paladin</th>
+<th>Mage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Physical</td>
+<td>~47% (helm+armor+legs+boots+neck+ring)</td>
+<td>~9% (Alicorn HG)</td>
+<td>~9% (Arcanomancer + Neck)</td>
+</tr>
+<tr class="even">
+<td>Fire</td>
+<td>~40% (Lavos set)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Energy</td>
+<td>~45% (Crystalline set)</td>
+<td>~4% (Alicorn HG elemental)</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>Poison</td>
+<td>~40% (Earthheart set)</td>
+<td>~4% (Alicorn HG elemental)</td>
+<td>~8% (various)</td>
+</tr>
+<tr class="odd">
+<td>Lifedrain</td>
+<td>—</td>
+<td>—</td>
+<td>~35% (Skull Helmet + Galea Mortis stack)</td>
+</tr>
+<tr class="even">
+<td>Elemental (Phys/Poison/Fire/Energy)</td>
+<td>~15%</td>
+<td>~9% (Alicorn HG+Ring combined)</td>
+<td>~9% (Arcanomancer Regalia + Sigill)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+</section>
+<section id="level-gated-progression-per-vocation" class="level2">
+<h2 class="anchored" data-anchor-id="level-gated-progression-per-vocation">3. Level-Gated Progression Per Vocation</h2>
+<section id="tier-comparison-table" class="level3">
+<h3 class="anchored" data-anchor-id="tier-comparison-table">3.1 Tier Comparison Table</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 34%">
+<col style="width: 22%">
+<col style="width: 25%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Level Tier</th>
+<th>Knight</th>
+<th>Paladin</th>
+<th>Mage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0 (starter)</td>
+<td>✗ (generic gear only)</td>
+<td>✓ Feather Headdress, Green Tunic, Red Tunic</td>
+<td>✓ Hat of Mad, Magician’s Robe, Charmer’s Tiara</td>
+</tr>
+<tr class="even">
+<td>20</td>
+<td>✗</td>
+<td>✗</td>
+<td>✓ Ethno Coat (ML+4)</td>
+</tr>
+<tr class="odd">
+<td>40</td>
+<td>✓ Knight Armor, Knight Legs, Knight Legs</td>
+<td>✗</td>
+<td>✗</td>
+</tr>
+<tr class="even">
+<td>45</td>
+<td>✓ Native Armor</td>
+<td>✓ Spirit Cloak (+ML6), Star Amulet, Elven Brooch</td>
+<td>✓ Spirit Cloak, Star Amulet</td>
+</tr>
+<tr class="odd">
+<td>50</td>
+<td>✓ Zaoan set (Speed+10)</td>
+<td>✓ Zaoan set (Speed+10)</td>
+<td>✗</td>
+</tr>
+<tr class="even">
+<td>60</td>
+<td>✗</td>
+<td>✗</td>
+<td>✓ Glacier/Magma/Terra sets, Gill/Glacier/Spider Amulets</td>
+</tr>
+<tr class="odd">
+<td>65</td>
+<td>✗</td>
+<td>✓ Elven Mail (Dist+6), Elven Legs (Dist+2)</td>
+<td>✓ Death Oyoroi</td>
+</tr>
+<tr class="even">
+<td>75</td>
+<td>✓ Crown/Lightning Armor, Skullcracker</td>
+<td>✓ Belted Cape (Dist+1), Grasshopper Legs</td>
+<td>✓ Focus Cape (ML+8), Batwing Hat (ML+6)</td>
+</tr>
+<tr class="odd">
+<td>80</td>
+<td>✓ Dragon Scale Mail (Shield+4), Helmet</td>
+<td>✓ Cloak of Deception (Dist+8)</td>
+<td>✓ Enchanted Sandals, Calopteryx/Velvet Mantles</td>
+</tr>
+<tr class="even">
+<td>85</td>
+<td>✗</td>
+<td>✓ Ranger’s Cloak (Dist+14), Royal Helmet (Dist+4)</td>
+<td>✓ Dark Lord’s Cape (ML+2), Robe of Underworld</td>
+</tr>
+<tr class="odd">
+<td>100</td>
+<td>✓ Golden/Warrior Oyoroi/Titan Armors</td>
+<td>✓ Paladin Armor (Dist+10), Elite Draken Mail</td>
+<td>✓ Spellweaver’s Robe (ML+10), Jade Legs</td>
+</tr>
+<tr class="even">
+<td>120</td>
+<td>✓ Swampland, Voltage Armors</td>
+<td>✓ Horseman Helmet (Dist+6)</td>
+<td>✓ Demonfang Mask</td>
+</tr>
+<tr class="odd">
+<td>150</td>
+<td>✓ Ornate/Dauntless/Cobra set</td>
+<td>✓ Amazon Helmet, Winged Helmet (Spd+20)</td>
+<td>✓ Spellbinder’s Robe (ML+12), Galea Mortis, various</td>
+</tr>
+<tr class="even">
+<td>200</td>
+<td>✓ Falcon Plate, Divine, Earthheart/Fireheart/Thunder</td>
+<td>✓ Earthsoul/Firesoul/Thundersoul Tabards, Master Archer’s</td>
+<td>✓ Pathfinder (ML+14), Arcane Dragon, Bear Skin</td>
+</tr>
+<tr class="odd">
+<td>220</td>
+<td>✓ Lion set (helm+armor+ring)</td>
+<td>✗</td>
+<td>✗</td>
+</tr>
+<tr class="even">
+<td>250</td>
+<td>✓ Eldritch set (helm+armor+legs)</td>
+<td>✗</td>
+<td>✓ Earthmind/Firemind/Thundermind Raiments</td>
+</tr>
+<tr class="odd">
+<td>300</td>
+<td>✓ Crystalline/Lavos Armor</td>
+<td>✓ Alicorn Headguard, Amazon Armor</td>
+<td>✓ Ferumbras’ Necklace (ML+10)</td>
+</tr>
+<tr class="even">
+<td>350</td>
+<td>✓ Spirithorn set (full)</td>
+<td>✓ Alicorn Ring</td>
+<td>✓ Arcanomancer Regalia, Dawnfire Sherwani, Dream Shroud</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="skill-boosting-gear-progression" class="level3">
+<h3 class="anchored" data-anchor-id="skill-boosting-gear-progression">3.2 Skill-Boosting Gear Progression</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 30%">
+<col style="width: 30%">
+<col style="width: 28%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Level</th>
+<th>Knight (Shielding*)</th>
+<th>Paladin (Distance*)</th>
+<th>Mage (Magic Level)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>—</td>
+<td>Feather Headdress +5, Wood Cape +6</td>
+<td>Magician’s Robe +2, Charmer’s Tiara +2, Hat of Mad +1</td>
+</tr>
+<tr class="even">
+<td>20</td>
+<td>—</td>
+<td>—</td>
+<td>Ethno Coat +4</td>
+</tr>
+<tr class="odd">
+<td>40</td>
+<td>Knight Armor +2, Knight Legs +2</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>45</td>
+<td>Native Armor +2</td>
+<td>—</td>
+<td>Spirit Cloak +6</td>
+</tr>
+<tr class="odd">
+<td>65</td>
+<td>—</td>
+<td>Elven Mail +6, Elven Legs +2</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>75</td>
+<td>Crown/Lightning Armor +2</td>
+<td>Belted Cape +1</td>
+<td>Focus Cape +8, Batwing Hat +6</td>
+</tr>
+<tr class="odd">
+<td>80</td>
+<td>Dragon Scale Mail +4, Helm +1</td>
+<td>Cloak of Deception +8</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>85</td>
+<td>—</td>
+<td>Ranger’s Cloak +14, Royal Helmet +4</td>
+<td>Velvet/Calopteryx +4</td>
+</tr>
+<tr class="odd">
+<td>100</td>
+<td>Golden Armor +4, Warrior Oyoroi +5</td>
+<td>Paladin/Elite Draken Armor +10</td>
+<td>Spellweaver’s Robe +10</td>
+</tr>
+<tr class="even">
+<td>120</td>
+<td>Swampland/Voltage +4</td>
+<td>Horseman Helmet +6</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>150</td>
+<td>Ornate Chestplate +4, Cobra Hood +2</td>
+<td>— (<strong>gap</strong>)</td>
+<td>Spellbinder’s Robe +12, ML+6 helms</td>
+</tr>
+<tr class="even">
+<td>200</td>
+<td>Falcon Plate/Divine +6</td>
+<td>Earthsoul/Firesoul/Thundersoul +4</td>
+<td>Pathfinder Chestplate +14</td>
+</tr>
+<tr class="odd">
+<td>220</td>
+<td>Lion set +8 (armor), +6 (helm)</td>
+<td>— (<strong>gap</strong>)</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>250</td>
+<td>Eldritch Cuirass +8, Hood +7, Breeches +6</td>
+<td>— (<strong>gap</strong>)</td>
+<td>Earthmind/Firemind/Thundermind +10</td>
+</tr>
+<tr class="odd">
+<td>300</td>
+<td>—</td>
+<td>— (<strong>gap</strong>)</td>
+<td>Ferumbras’ Necklace +10</td>
+</tr>
+<tr class="even">
+<td>350</td>
+<td>Spirithorn set +10/+8/+6</td>
+<td>Alicorn Headguard +3, Amazon Armor +20, Alicorn Ring +4</td>
+<td>Dawnfire/Dream Shroud +12, Arcanomancer +8, Sigill +6</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>*</strong> Items marked <strong>(*bug)</strong> had their Shielding/Distance skill boost previously hidden due to a missing <code>case_when</code> branch in <code>equipment.qmd</code> — now fixed.</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="balance-verdict" class="level2">
+<h2 class="anchored" data-anchor-id="balance-verdict">4. Balance Verdict</h2>
+<section id="armor-totals-by-vocation-bis-at-level-350" class="level3">
+<h3 class="anchored" data-anchor-id="armor-totals-by-vocation-bis-at-level-350">4.1 Armor Totals by Vocation (BIS at level 350)</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Slot</th>
+<th style="text-align: right;">Knight</th>
+<th style="text-align: right;">Paladin</th>
+<th style="text-align: right;">Mage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Helmet</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">10</td>
+</tr>
+<tr class="even">
+<td>Necklace</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td>Armor</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr class="even">
+<td>Legs</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">7*</td>
+<td style="text-align: right;">8†</td>
+</tr>
+<tr class="odd">
+<td>Boots</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td>Ring</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td><strong>Total</strong></td>
+<td style="text-align: right;"><strong>65</strong></td>
+<td style="text-align: right;"><strong>37</strong></td>
+<td style="text-align: right;"><strong>36</strong></td>
+</tr>
+</tbody>
+</table>
+<p>* Paladin’s best legs are Elven Legs (level 65) — there is no Paladin leg slot upgrade past level 65 for any meaningful stat. † Mage’s best legs with skill boost are Gill/Pirate Legs (level 150).</p>
+<p>Knights have <strong>75% more total armor</strong> than Paladins and Mages at endgame. This is expected by design (tank vs.&nbsp;ranged/caster), but the gap in legs progression is a notable issue — Paladin has nothing at 200, 250, 300, or 350 level tiers.</p>
+</section>
+<section id="max-skill-boost-by-vocation" class="level3">
+<h3 class="anchored" data-anchor-id="max-skill-boost-by-vocation">4.2 Max Skill Boost by Vocation</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Vocation</th>
+<th>Primary Skill</th>
+<th>Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Knight</td>
+<td>Shielding</td>
+<td>+36</td>
+</tr>
+<tr class="even">
+<td>Knight</td>
+<td>Sword / Club / Axe</td>
+<td>+10 each</td>
+</tr>
+<tr class="odd">
+<td>Paladin</td>
+<td>Distance</td>
+<td>+27</td>
+</tr>
+<tr class="even">
+<td>Paladin</td>
+<td>Speed</td>
+<td>+75</td>
+</tr>
+<tr class="odd">
+<td>Mage</td>
+<td>Magic Level</td>
+<td>+56</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="key-findings" class="level3">
+<h3 class="anchored" data-anchor-id="key-findings">4.3 Key Findings</h3>
+<section id="fixed-shielding-and-distance-skills-not-decoded" class="level4">
+<h4 class="anchored" data-anchor-id="fixed-shielding-and-distance-skills-not-decoded">✅ Fixed: Shielding and Distance skills not decoded</h4>
+<p>The <code>skill</code> field in <code>equipment.qmd</code> used a <code>case_when</code> with branches for skills 1, 4, 8, 9, 10 only. Skills 6 (Shielding) and 7 (Distance) fell through to the <code>TRUE ~ ""</code> default and displayed blank.</p>
+<p><strong>Impact (before fix):</strong> - <strong>36 Shielding</strong> from equipment was completely invisible to Knight players browsing the equipment library - <strong>27 Distance</strong> from equipment was invisible to Paladin players - This affected the primary skill boost for two out of three vocations</p>
+<p><strong>Affected items:</strong> Spirithorn Helmet, Spirithorn Armor, Eldritch Breeches, Treader of Torment, The Covenant of Death, Spirithorn Ring (Knight); Alicorn Headguard, Amazon Armor, Alicorn Ring (Paladin); and ~30 additional items.</p>
+<p><strong>Fix applied:</strong> Added <code>skill_number == 6</code> and <code>skill_number == 7</code> branches to the <code>case_when</code> block in <code>equipment.qmd</code>.</p>
+</section>
+<section id="bug-additional-undecoded-skill-numbers" class="level4">
+<h4 class="anchored" data-anchor-id="bug-additional-undecoded-skill-numbers">Bug: Additional undecoded skill numbers</h4>
+<p>Skills 14 (appears on Soft Boots, Ring of Healing, Life Ring, Star Amulet — likely regeneration), 16 (Stealth Ring — likely stealth effect), 20 (Dwarven Ring), and 21 (Energy Ring) also return blank. Skill 2 appears on Ruby Necklace (unknown). These are likely cosmetic/minor bugs since these items are often utility items rather than core progression gear.</p>
+</section>
+<section id="imbalance-missing-endgame-legs-for-paladin" class="level4">
+<h4 class="anchored" data-anchor-id="imbalance-missing-endgame-legs-for-paladin">Imbalance: Missing endgame legs for Paladin</h4>
+<p>Paladins have no leg slot upgrade past level 65 (Elven Legs, armor 7). The best available legs by vocation at each high-level tier:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 27%">
+<col style="width: 31%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Level</th>
+<th>Knight Legs</th>
+<th>Paladin Legs</th>
+<th>Mage Legs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>150</td>
+<td>Ornate Legs (10), Soulful Legs (10)</td>
+<td><strong>nothing new</strong></td>
+<td>Gill/Pirate Legs (7)</td>
+</tr>
+<tr class="even">
+<td>200</td>
+<td>Cast Iron / Falcon Greaves (11)</td>
+<td><strong>nothing new</strong></td>
+<td><strong>nothing new</strong></td>
+</tr>
+<tr class="odd">
+<td>250</td>
+<td>Eldritch Breeches (12)</td>
+<td><strong>nothing new</strong></td>
+<td><strong>nothing new</strong></td>
+</tr>
+<tr class="even">
+<td>300</td>
+<td><strong>nothing new</strong></td>
+<td><strong>nothing new</strong></td>
+<td><strong>nothing new</strong></td>
+</tr>
+<tr class="odd">
+<td>350</td>
+<td>— (no new legs)</td>
+<td><strong>nothing new</strong></td>
+<td><strong>nothing new</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Paladins go from Elven Legs at level 65 to wearing Grasshopper Legs (all-vocation, level 75) for Speed build, or Prismatic Legs (level 100, Knight+Paladin shared) for protection. There is no dedicated Paladin leg upgrade from level 100 onward.</p>
+<p><strong>Recommendation:</strong> Add a Paladin-specific legs item at level 150–200 and 300–350 tiers to match the progression cadence of Knights and provide Distance skill boost (currently 0 from leg slot for Paladins at endgame).</p>
+</section>
+<section id="imbalance-missing-endgame-legs-for-mage" class="level4">
+<h4 class="anchored" data-anchor-id="imbalance-missing-endgame-legs-for-mage">Imbalance: Missing endgame legs for Mage</h4>
+<p>Mages have no leg slot upgrade past level 150 (Gill/Pirate Legs, armor 7, ML+4). Pathfinder Fleshguards (level 150, armor 8) offer no skill boost. No Mage legs exist at the 200, 250, 300, or 350 level tiers.</p>
+<p><strong>Recommendation:</strong> Add a Mage-specific legs item at level 200 and 350 with meaningful ML boost to complete the endgame set.</p>
+</section>
+<section id="imbalance-speed-items-are-unrestricted-design-concern" class="level4">
+<h4 class="anchored" data-anchor-id="imbalance-speed-items-are-unrestricted-design-concern">Imbalance: Speed items are unrestricted (design concern)</h4>
+<p>The following Speed-boosting items have <strong>no profession restriction</strong>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Item</th>
+<th>Lvl</th>
+<th>Speed Boost</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Coconut Shoes</td>
+<td>—</td>
+<td>+10</td>
+<td>Physical +10%</td>
+</tr>
+<tr class="even">
+<td>Crocodile Boots</td>
+<td>—</td>
+<td>+10</td>
+<td>Physical +8%</td>
+</tr>
+<tr class="odd">
+<td>Badger Boots</td>
+<td>40</td>
+<td>+15</td>
+<td>Physical +6%</td>
+</tr>
+<tr class="even">
+<td>Boots of Haste</td>
+<td>75</td>
+<td>+20</td>
+<td>Physical +7%</td>
+</tr>
+<tr class="odd">
+<td>Grasshopper Legs</td>
+<td>75</td>
+<td>+25</td>
+<td>Physical +8%</td>
+</tr>
+<tr class="even">
+<td>Vampire Silk Slippers</td>
+<td>100</td>
+<td>+25</td>
+<td>Physical +7%</td>
+</tr>
+<tr class="odd">
+<td>Time Ring</td>
+<td>—</td>
+<td>+30</td>
+<td>Physical +6%</td>
+</tr>
+</tbody>
+</table>
+<p>Knights can stack Speed from these unrestricted items alongside their dedicated armor sets. A Knight in Spirithorn armor can simultaneously equip Grasshopper Legs (+25 speed) and Vampire Silk Slippers (+25 speed) for +50 Speed, which likely outclasses Paladins in burst-movement scenarios.</p>
+<p>If Speed is intended as a Paladin-distinctive stat, most of these items — especially Boots of Haste, Grasshopper Legs, and Vampire Silk Slippers — should be restricted to Paladin or be universal as a deliberate design choice.</p>
+</section>
+<section id="imbalance-level-220-tier-is-knight-only" class="level4">
+<h4 class="anchored" data-anchor-id="imbalance-level-220-tier-is-knight-only">Imbalance: Level 220 tier is Knight-only</h4>
+<p>The Lion set (Lion Spangenhelm, Lion Chestplate, Lion Amulet, Lion Ring) exists exclusively at level 220 and is restricted to Knights. No equivalent 220-tier items exist for Paladin or Mage. Players of those vocations jump directly from 200 to 250+ for endgame gear.</p>
+<p><strong>Recommendation:</strong> Either add level 220 items for Paladin and Mage, or move Lion set items to nearby tiers (200 or 250) where they fit existing progressions.</p>
+</section>
+<section id="imbalance-level-250-tier-is-knight-and-mage-only" class="level4">
+<h4 class="anchored" data-anchor-id="imbalance-level-250-tier-is-knight-and-mage-only">Imbalance: Level 250 tier is Knight and Mage only</h4>
+<p>The Eldritch set (250, Knight) and Earthmind/Firemind/Thundermind Raiments (250, Mage) exist. Paladins have nothing at level 250.</p>
+<p><strong>Recommendation:</strong> Add a Paladin item set at level 250, ideally with Distance skill boost to address the persistent Distance visibility and progression gap.</p>
+</section>
+<section id="note-no-sorcerer-only-or-druid-only-items" class="level4">
+<h4 class="anchored" data-anchor-id="note-no-sorcerer-only-or-druid-only-items">Note: No Sorcerer-only or Druid-only items</h4>
+<p>All Mage items use <code>Professions = 24</code> (Sorcerer+Druid). There is no gear that rewards specializing as one or the other. This is a design choice — the codebase supports individual prof=8 (Sorcerer) or prof=16 (Druid) items but none exist. This may be intentional for simplicity but limits build differentiation.</p>
+</section>
+<section id="offensive-build-note-glass-cannon-tradeoffs" class="level4">
+<h4 class="anchored" data-anchor-id="offensive-build-note-glass-cannon-tradeoffs">Offensive build note: Glass cannon tradeoffs</h4>
+<p>Several high-skill-boost items accept large weaknesses in exchange for no protection:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Item</th>
+<th style="text-align: right;">Armor</th>
+<th>Skill</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Master Archer’s Armor (200, Pal)</td>
+<td style="text-align: right;">8</td>
+<td>Distance +20</td>
+<td>Physical +5%</td>
+</tr>
+<tr class="even">
+<td>Amazon Armor (300, Pal)</td>
+<td style="text-align: right;">16</td>
+<td>Distance +20</td>
+<td>Physical +5%</td>
+</tr>
+<tr class="odd">
+<td>Ranger’s Cloak (85, Pal)</td>
+<td style="text-align: right;">1</td>
+<td>Distance +14</td>
+<td>Physical +9%</td>
+</tr>
+<tr class="even">
+<td>Cloak of Deception (80, Pal)</td>
+<td style="text-align: right;">13</td>
+<td>Distance +8</td>
+<td>Physical +10%</td>
+</tr>
+<tr class="odd">
+<td>Ring of Fire (85, All)</td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>Physical +99%, Fire -99%</td>
+</tr>
+</tbody>
+</table>
+<p>Paladin’s offensive build path (stacking Distance through Ranger’s Cloak + Amazon Armor + Alicorn Ring) provides substantial skill boost but near-zero armor at endgame. Ring of Fire in particular is a single-purpose situational item with extreme tradeoff. These are workable design choices but should be verified in gameplay testing.</p>
+</section>
+</section>
+<section id="summary-of-recommendations" class="level3">
+<h3 class="anchored" data-anchor-id="summary-of-recommendations">4.4 Summary of Recommendations</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 28%">
+<col style="width: 32%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Priority</th>
+<th>Issue</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><del><strong>HIGH</strong></del> ✅</td>
+<td>Shielding (skill 6) not decoded in UI</td>
+<td>Fixed in <code>equipment.qmd</code></td>
+</tr>
+<tr class="even">
+<td><del><strong>HIGH</strong></del> ✅</td>
+<td>Distance (skill 7) not decoded in UI</td>
+<td>Fixed in <code>equipment.qmd</code></td>
+</tr>
+<tr class="odd">
+<td><del><strong>HIGH</strong></del> ✅</td>
+<td><code>ProtectionDamageTypes=271</code> includes Lifedrain erroneously</td>
+<td>Fixed to 15 in <code>objects.srv</code> + DB (8 items)</td>
+</tr>
+<tr class="even">
+<td><del><strong>HIGH</strong></del> ✅</td>
+<td><code>ProtectionDamageTypes=17</code> on Knight Legs (spurious bit 16)</td>
+<td>Fixed to 1 in <code>objects.srv</code> + DB</td>
+</tr>
+<tr class="odd">
+<td><strong>MEDIUM</strong></td>
+<td>No Paladin legs past level 65</td>
+<td>Add Paladin legs at ~150, ~250, and ~350</td>
+</tr>
+<tr class="even">
+<td><strong>MEDIUM</strong></td>
+<td>No Mage legs past level 150</td>
+<td>Add Mage legs at ~250 and ~350</td>
+</tr>
+<tr class="odd">
+<td><strong>MEDIUM</strong></td>
+<td>Level 220 gap for Paladin and Mage</td>
+<td>Add tier items or rebalance Lion set placement</td>
+</tr>
+<tr class="even">
+<td><strong>MEDIUM</strong></td>
+<td>Level 250 gap for Paladin</td>
+<td>Add Paladin endgame set at level 250</td>
+</tr>
+<tr class="odd">
+<td><strong>LOW</strong></td>
+<td>Speed boots have no profession restriction</td>
+<td>Decide if speed is Paladin-exclusive stat</td>
+</tr>
+<tr class="even">
+<td><strong>LOW</strong></td>
+<td>Skill 14, 16, 20, 21 not decoded in UI</td>
+<td>Investigate and decode remaining skill types</td>
+</tr>
+<tr class="odd">
+<td><strong>LOW</strong></td>
+<td>No Sorcerer/Druid split items</td>
+<td>Design consideration only</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

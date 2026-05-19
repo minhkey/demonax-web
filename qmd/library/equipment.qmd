@@ -71,9 +71,15 @@ equipment_data <- items |>
       is.na(skill_number) ~ "",
       skill_number == 1 ~ paste0("Magic level +", skill_modification),
       skill_number == 4 ~ paste0("Speed +", skill_modification),
+      skill_number == 6 ~ paste0("Shielding +", skill_modification),
+      skill_number == 7 ~ paste0("Distance fighting +", skill_modification),
       skill_number == 8 ~ paste0("Sword fighting +", skill_modification),
       skill_number == 9 ~ paste0("Club fighting +", skill_modification),
       skill_number == 10 ~ paste0("Axe fighting +", skill_modification),
+      skill_number == 14 ~ paste0("Slightly faster regeneration +", skill_modification),
+      skill_number == 16 ~ paste0("Invisibility +", skill_modification),
+      skill_number == 20 ~ paste0("Protection vs drunkenness +", skill_modification),
+      skill_number == 21 ~ paste0("Mana shield +", skill_modification),
       TRUE ~ ""  # default
     ),
     critical = ifelse(

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>equipment-balance-changes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="equipment-balance-changes_files/libs/clipboard/clipboard.min.js"></script>
+<script src="equipment-balance-changes_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="equipment-balance-changes_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="equipment-balance-changes_files/libs/quarto-html/popper.min.js"></script>
+<script src="equipment-balance-changes_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="equipment-balance-changes_files/libs/quarto-html/anchor.min.js"></script>
+<link href="equipment-balance-changes_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="equipment-balance-changes_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="equipment-balance-changes_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="equipment-balance-changes_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="equipment-balance-changes_files/libs/bootstrap/bootstrap-e16ae8ed48870bdb12a5e451bf23a302.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="equipment-balance-changes-plan" class="level1">
+<h1>Equipment Balance Changes Plan</h1>
+<p><strong>Date:</strong> 2026-02-17 <strong>Status:</strong> PENDING REVIEW</p>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>This document proposes 12 item modifications to address balance gaps identified in <code>docs/equipment-balance.md</code>. All changes affect items with TypeID 5000+ only (newer items), preserving nostalgic older items.</p>
+</section>
+<section id="design-principles-vocation-identity" class="level2">
+<h2 class="anchored" data-anchor-id="design-principles-vocation-identity">Design Principles (Vocation Identity)</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 31%">
+<col style="width: 22%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Vocation</th>
+<th>Primary Stats</th>
+<th>Secondary</th>
+<th>Trade-offs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Knight</strong></td>
+<td>Highest armor, elemental protection</td>
+<td>Shielding, melee weapon skills</td>
+<td>Lower speed, no ML</td>
+</tr>
+<tr class="even">
+<td><strong>Paladin</strong></td>
+<td>Highest speed, distance skill</td>
+<td>Moderate armor</td>
+<td>Speed items must have physical weakness</td>
+</tr>
+<tr class="odd">
+<td><strong>Mage</strong></td>
+<td>Highest magic level, regeneration</td>
+<td>—</td>
+<td>Lowest armor, protection, speed</td>
+</tr>
+</tbody>
+</table>
+<p>All changes below respect these identity boundaries.</p>
+<hr>
+</section>
+<section id="key-balance-issues-addressed" class="level2">
+<h2 class="anchored" data-anchor-id="key-balance-issues-addressed">Key Balance Issues Addressed</h2>
+<section id="paladin-legs-gap-critical" class="level3">
+<h3 class="anchored" data-anchor-id="paladin-legs-gap-critical">1. Paladin Legs Gap (CRITICAL)</h3>
+<ul>
+<li><strong>Problem:</strong> Best Paladin-specific legs are Elven Legs (lvl 65). No Paladin legs from level 65 to 350!</li>
+<li><strong>Solution:</strong> Convert Pathfinder Legs (lvl 150) and Cast Iron Legs (lvl 200) to Paladin</li>
+</ul>
+</section>
+<section id="mage-legs-gap-high" class="level3">
+<h3 class="anchored" data-anchor-id="mage-legs-gap-high">2. Mage Legs Gap (HIGH)</h3>
+<ul>
+<li><strong>Problem:</strong> Best Mage legs are Gill/Pirate Legs (lvl 150, ML +4). No Mage legs at 200+</li>
+<li><strong>Solution:</strong> Add ML boost to Pathfinder Fleshguards (lvl 150), convert Soulful Legs to Mage lvl 200</li>
+</ul>
+</section>
+<section id="speed-items-unrestricted-medium" class="level3">
+<h3 class="anchored" data-anchor-id="speed-items-unrestricted-medium">3. Speed Items Unrestricted (MEDIUM)</h3>
+<ul>
+<li><strong>Problem:</strong> High-speed items like Grasshopper Legs, Vampire Silk Slippers available to all vocations</li>
+<li><strong>Solution:</strong> Restrict to Paladin-only (Speed is Paladin’s signature stat)</li>
+</ul>
+</section>
+<section id="missing-skill-boosts-low" class="level3">
+<h3 class="anchored" data-anchor-id="missing-skill-boosts-low">4. Missing Skill Boosts (LOW)</h3>
+<ul>
+<li><strong>Problem:</strong> Several high-level items lack skill boosts</li>
+<li><strong>Solution:</strong> Add Distance/ML boosts to Demon Mengu, Pathfinder Stompers, Shroud Of Wisdom</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="proposed-changes" class="level2">
+<h2 class="anchored" data-anchor-id="proposed-changes">Proposed Changes</h2>
+<section id="change-1-pathfinder-legs-5501---convert-to-paladin" class="level3">
+<h3 class="anchored" data-anchor-id="change-1-pathfinder-legs-5501---convert-to-paladin">Change 1: Pathfinder Legs (5501) - Convert to Paladin</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5501
+Name        = "pathfinder legs"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,Take,Weakness}
+Attributes  = {MinimumLevel=150,Professions=2,Weight=3840,BodyPosition=7,ArmorValue=7,ProtectionDamageTypes=8,DamageReduction=18,WeaknessDamageTypes=2,DamageIncrease=17}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5501
+Name        = "pathfinder legs"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=150,Professions=4,Weight=3840,BodyPosition=7,ArmorValue=8,SkillNumber=7,SkillModification=4,ProtectionDamageTypes=8,DamageReduction=10,WeaknessDamageTypes=2,DamageIncrease=9}</code></pre>
+<p><strong>Changes:</strong> Knight→Paladin, add Distance +4, adjust protection/weakness</p>
+<hr>
+</section>
+<section id="change-2-pathfinder-fleshguards-5500---add-ml-boost" class="level3">
+<h3 class="anchored" data-anchor-id="change-2-pathfinder-fleshguards-5500---add-ml-boost">Change 2: Pathfinder Fleshguards (5500) - Add ML boost</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5500
+Name        = "pathfinder fleshguards"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,Take}
+Attributes  = {MinimumLevel=150,Professions=24,Weight=4280,BodyPosition=7,ArmorValue=8,ProtectionDamageTypes=4,DamageReduction=4}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5500
+Name        = "pathfinder fleshguards"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take}
+Attributes  = {MinimumLevel=150,Professions=24,Weight=4280,BodyPosition=7,ArmorValue=8,SkillNumber=1,SkillModification=6,ProtectionDamageTypes=4,DamageReduction=4}</code></pre>
+<p><strong>Changes:</strong> Add Magic Level +6</p>
+<hr>
+</section>
+<section id="change-3-demon-mengu-5541---add-distance-boost" class="level3">
+<h3 class="anchored" data-anchor-id="change-3-demon-mengu-5541---add-distance-boost">Change 3: Demon Mengu (5541) - Add Distance boost</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5541
+Name        = "a demon mengu"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,Take,Weakness}
+Attributes  = {MinimumLevel=200,Professions=4,Weight=3980,BodyPosition=1,ArmorValue=8,ProtectionDamageTypes=4,DamageReduction=10,WeaknessDamageTypes=1,DamageIncrease=9}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5541
+Name        = "a demon mengu"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=200,Professions=4,Weight=3980,BodyPosition=1,ArmorValue=8,SkillNumber=7,SkillModification=5,ProtectionDamageTypes=4,DamageReduction=10,WeaknessDamageTypes=1,DamageIncrease=9}</code></pre>
+<p><strong>Changes:</strong> Add Distance +5</p>
+<hr>
+</section>
+<section id="change-4-pathfinder-stompers-5496---add-ml-boost" class="level3">
+<h3 class="anchored" data-anchor-id="change-4-pathfinder-stompers-5496---add-ml-boost">Change 4: Pathfinder Stompers (5496) - Add ML boost</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5496
+Name        = "pathfinder stompers"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,Take,Weakness}
+Attributes  = {MinimumLevel=200,Professions=24,Weight=3100,BodyPosition=8,ArmorValue=2,ProtectionDamageTypes=4,DamageReduction=6,WeaknessDamageTypes=1,DamageIncrease=5}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5496
+Name        = "pathfinder stompers"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=200,Professions=24,Weight=3100,BodyPosition=8,ArmorValue=2,SkillNumber=1,SkillModification=6,ProtectionDamageTypes=4,DamageReduction=6,WeaknessDamageTypes=1,DamageIncrease=5}</code></pre>
+<p><strong>Changes:</strong> Add Magic Level +6</p>
+<hr>
+</section>
+<section id="change-5-shroud-of-wisdom-5505---add-ml-boost" class="level3">
+<h3 class="anchored" data-anchor-id="change-5-shroud-of-wisdom-5505---add-ml-boost">Change 5: Shroud Of Wisdom (5505) - Add ML boost</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5505
+Name        = "a shroud of wisdom"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,Take,Weakness}
+Attributes  = {MinimumLevel=250,Professions=24,Weight=5500,BodyPosition=4,ArmorValue=16,ProtectionDamageTypes=8,DamageReduction=13,WeaknessDamageTypes=2,DamageIncrease=11}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5505
+Name        = "a shroud of wisdom"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=250,Professions=24,Weight=5500,BodyPosition=4,ArmorValue=16,SkillNumber=1,SkillModification=8,ProtectionDamageTypes=8,DamageReduction=13,WeaknessDamageTypes=2,DamageIncrease=11}</code></pre>
+<p><strong>Changes:</strong> Add Magic Level +8</p>
+<hr>
+</section>
+<section id="change-6-grasshopper-legs-5213---restrict-to-paladin" class="level3">
+<h3 class="anchored" data-anchor-id="change-6-grasshopper-legs-5213---restrict-to-paladin">Change 6: Grasshopper Legs (5213) - Restrict to Paladin</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5213
+Name        = "grasshopper legs"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=75,Weight=3200,BodyPosition=7,ArmorValue=6,SkillNumber=4,SkillModification=25,ProtectionDamageTypes=0,DamageReduction=0,WeaknessDamageTypes=1,DamageIncrease=8}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5213
+Name        = "grasshopper legs"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=75,Professions=4,Weight=3200,BodyPosition=7,ArmorValue=6,SkillNumber=4,SkillModification=25,ProtectionDamageTypes=0,DamageReduction=0,WeaknessDamageTypes=1,DamageIncrease=8}</code></pre>
+<p><strong>Changes:</strong> Add RestrictProfession flag, Professions=4 (Paladin only)</p>
+<hr>
+</section>
+<section id="change-7-badger-boots-5220---restrict-to-paladin" class="level3">
+<h3 class="anchored" data-anchor-id="change-7-badger-boots-5220---restrict-to-paladin">Change 7: Badger Boots (5220) - Restrict to Paladin</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5220
+Name        = "badger boots"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=40,Weight=1100,BodyPosition=8,ArmorValue=2,SkillNumber=4,SkillModification=15,ProtectionDamageTypes=0,DamageReduction=0,WeaknessDamageTypes=1,DamageIncrease=6}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5220
+Name        = "badger boots"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=40,Professions=4,Weight=1100,BodyPosition=8,ArmorValue=2,SkillNumber=4,SkillModification=15,ProtectionDamageTypes=0,DamageReduction=0,WeaknessDamageTypes=1,DamageIncrease=6}</code></pre>
+<p><strong>Changes:</strong> Add RestrictProfession flag, Professions=4 (Paladin only)</p>
+<hr>
+</section>
+<section id="change-8-vampire-silk-slippers-5226---restrict-to-paladin" class="level3">
+<h3 class="anchored" data-anchor-id="change-8-vampire-silk-slippers-5226---restrict-to-paladin">Change 8: Vampire Silk Slippers (5226) - Restrict to Paladin</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5226
+Name        = "vampire silk slippers"
+Flags       = {Clothes,Protection,RestrictLevel,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=100,Weight=1150,BodyPosition=8,SkillNumber=4,SkillModification=25,ProtectionDamageTypes=0,DamageReduction=0,WeaknessDamageTypes=1,DamageIncrease=7}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5226
+Name        = "vampire silk slippers"
+Flags       = {Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=100,Professions=4,Weight=1150,BodyPosition=8,SkillNumber=4,SkillModification=25,ProtectionDamageTypes=0,DamageReduction=0,WeaknessDamageTypes=1,DamageIncrease=7}</code></pre>
+<p><strong>Changes:</strong> Add RestrictProfession flag, Professions=4 (Paladin only)</p>
+<hr>
+</section>
+<section id="change-9-coconut-shoes-5535---restrict-to-paladin-fix-typo" class="level3">
+<h3 class="anchored" data-anchor-id="change-9-coconut-shoes-5535---restrict-to-paladin-fix-typo">Change 9: Coconut Shoes (5535) - Restrict to Paladin + Fix typo</h3>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5535
+Name        = "cocnut shoes"
+Flags       = {Clothes,Protection,SkillBoost,Take,Weakness}
+Attributes  = {Weight=750,BodyPosition=8,ArmorValue=1,SkillNumber=4,SkillModification=10,ProtectionDamageTypes=0,DamageReduction=0,WeaknessDamageTypes=1,DamageIncrease=10}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5535
+Name        = "coconut shoes"
+Flags       = {Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=20,Professions=4,Weight=750,BodyPosition=8,ArmorValue=1,SkillNumber=4,SkillModification=10,ProtectionDamageTypes=0,DamageReduction=0,WeaknessDamageTypes=1,DamageIncrease=10}</code></pre>
+<p><strong>Changes:</strong> Fix typo “cocnut”→“coconut”, add RestrictLevel/RestrictProfession, MinimumLevel=20, Professions=4</p>
+<hr>
+</section>
+<section id="change-10-cast-iron-legs-5458---convert-to-paladin" class="level3">
+<h3 class="anchored" data-anchor-id="change-10-cast-iron-legs-5458---convert-to-paladin">Change 10: Cast Iron Legs (5458) - Convert to Paladin</h3>
+<p>Knights have both Falcon Greaves (5168) and Cast Iron Legs (5458) at level 200. Converting Cast Iron to Paladin fills the gap.</p>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5458
+Name        = "cast iron legs"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=200,Professions=2,Weight=34900,BodyPosition=7,ArmorValue=11,SkillNumber=6,SkillModification=4,ProtectionDamageTypes=1,DamageReduction=15,WeaknessDamageTypes=8,DamageIncrease=13}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5458
+Name        = "cast iron legs"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=200,Professions=4,Weight=34900,BodyPosition=7,ArmorValue=9,SkillNumber=7,SkillModification=6,ProtectionDamageTypes=1,DamageReduction=10,WeaknessDamageTypes=8,DamageIncrease=8}</code></pre>
+<p><strong>Changes:</strong> Knight→Paladin, Shielding→Distance +6, reduce armor 11→9</p>
+<hr>
+</section>
+<section id="change-11-soulful-legs-5212---convert-to-mage-lvl-200" class="level3">
+<h3 class="anchored" data-anchor-id="change-11-soulful-legs-5212---convert-to-mage-lvl-200">Change 11: Soulful Legs (5212) - Convert to Mage lvl 200</h3>
+<p>Knights have both Ornate Legs (5127) and Soulful Legs (5212) at level 150. Converting Soulful to Mage and raising level fills the Mage lvl 200 legs gap.</p>
+<p><strong>Current:</strong></p>
+<pre><code>TypeID      = 5212
+Name        = "soulful legs"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=150,Professions=2,Weight=3800,BodyPosition=7,ArmorValue=10,SkillNumber=6,SkillModification=3,ProtectionDamageTypes=8,DamageReduction=15,WeaknessDamageTypes=2,DamageIncrease=14}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5212
+Name        = "soulful legs"
+Flags       = {Armor,Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=200,Professions=24,Weight=3800,BodyPosition=7,ArmorValue=8,SkillNumber=1,SkillModification=6,ProtectionDamageTypes=8,DamageReduction=10,WeaknessDamageTypes=2,DamageIncrease=9}</code></pre>
+<p><strong>Changes:</strong> lvl 150→200, Knight→Mage, Shielding→ML +6, reduce armor 10→8</p>
+<hr>
+</section>
+<section id="change-12-lion-ring-5470---fix-duplicate-flags-bug" class="level3">
+<h3 class="anchored" data-anchor-id="change-12-lion-ring-5470---fix-duplicate-flags-bug">Change 12: Lion Ring (5470) - Fix duplicate Flags bug</h3>
+<p><strong>Current (BUGGY):</strong></p>
+<pre><code>TypeID      = 5470
+Name        = "a lion ring"
+Flags       = {Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Flags       = {Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=220,Professions=2,Weight=40,BodyPosition=9,SkillNumber=6,SkillModification=2,ProtectionDamageTypes=1,DamageReduction=5,WeaknessDamageTypes=8,DamageIncrease=4}</code></pre>
+<p><strong>Proposed:</strong></p>
+<pre><code>TypeID      = 5470
+Name        = "a lion ring"
+Flags       = {Clothes,Protection,RestrictLevel,RestrictProfession,SkillBoost,Take,Weakness}
+Attributes  = {MinimumLevel=220,Professions=2,Weight=40,BodyPosition=9,SkillNumber=6,SkillModification=2,ProtectionDamageTypes=1,DamageReduction=5,WeaknessDamageTypes=8,DamageIncrease=4}</code></pre>
+<p><strong>Changes:</strong> Remove duplicate Flags line (formatting bug fix only)</p>
+<hr>
+</section>
+</section>
+<section id="summary-table" class="level2">
+<h2 class="anchored" data-anchor-id="summary-table">Summary Table</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 18%">
+<col style="width: 25%">
+<col style="width: 30%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>TypeID</th>
+<th>Item Name</th>
+<th>Change Type</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>5501</td>
+<td>Pathfinder Legs</td>
+<td>Prof 2→4, add Distance +4</td>
+<td>Paladin legs at lvl 150</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>5500</td>
+<td>Pathfinder Fleshguards</td>
+<td>Add ML +6</td>
+<td>Better Mage legs at lvl 150</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>5541</td>
+<td>Demon Mengu</td>
+<td>Add Distance +5</td>
+<td>Paladin helm skill at lvl 200</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>5496</td>
+<td>Pathfinder Stompers</td>
+<td>Add ML +6</td>
+<td>Mage boots skill at lvl 200</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>5505</td>
+<td>Shroud Of Wisdom</td>
+<td>Add ML +8</td>
+<td>Mage armor skill at lvl 250</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>5213</td>
+<td>Grasshopper Legs</td>
+<td>Add Prof=4</td>
+<td>Speed legs Paladin-only</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>5220</td>
+<td>Badger Boots</td>
+<td>Add Prof=4</td>
+<td>Speed boots Paladin-only</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>5226</td>
+<td>Vampire Silk Slippers</td>
+<td>Add Prof=4</td>
+<td>Speed boots Paladin-only</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>5535</td>
+<td>Coconut Shoes</td>
+<td>Add Prof=4, lvl 20, fix typo</td>
+<td>Speed boots Paladin-only</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>5458</td>
+<td>Cast Iron Legs</td>
+<td>Prof 2→4, Shielding→Distance</td>
+<td>Paladin legs at lvl 200</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td>5212</td>
+<td>Soulful Legs</td>
+<td>Prof 2→24, lvl 150→200, Shielding→ML</td>
+<td>Mage legs at lvl 200</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>5470</td>
+<td>Lion Ring</td>
+<td>Fix duplicate Flags line</td>
+<td>Bug fix</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="design-compliance" class="level2">
+<h2 class="anchored" data-anchor-id="design-compliance">Design Compliance</h2>
+<ul>
+<li><strong>Knight:</strong> Keeps highest armor/protection/shielding. Lion set unchanged. Falcon Greaves/Ornate Legs remain.</li>
+<li><strong>Paladin:</strong> Gets exclusive Speed items + Distance skill boosts. Speed always paired with physical weakness.</li>
+<li><strong>Mage:</strong> Gets ML boosts on legs/boots/armor. Lower armor values than Knight/Paladin.</li>
+</ul>
+<hr>
+</section>
+<section id="gaps-addressed" class="level2">
+<h2 class="anchored" data-anchor-id="gaps-addressed">Gaps Addressed</h2>
+<ul>
+<li>✅ Paladin legs at 150 (Pathfinder Legs)</li>
+<li>✅ Paladin legs at 200 (Cast Iron Legs)</li>
+<li>✅ Mage legs at 150 (Pathfinder Fleshguards with ML +6)</li>
+<li>✅ Mage legs at 200 (Soulful Legs with ML +6)</li>
+<li>✅ Speed items restricted to Paladin</li>
+<li>✅ Paladin helm skill at 200 (Demon Mengu with Distance +5)</li>
+<li>✅ Mage boots skill at 200 (Pathfinder Stompers with ML +6)</li>
+<li>✅ Mage armor skill at 250 (Shroud Of Wisdom with ML +8)</li>
+</ul>
+</section>
+<section id="remaining-gaps-would-require-new-items" class="level2">
+<h2 class="anchored" data-anchor-id="remaining-gaps-would-require-new-items">Remaining Gaps (Would Require New Items)</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Gap</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Paladin legs lvl 250+</td>
+<td>No Paladin legs at 250, 300, 350</td>
+</tr>
+<tr class="even">
+<td>Mage legs lvl 250+</td>
+<td>No Mage legs at 250, 300, 350</td>
+</tr>
+<tr class="odd">
+<td>Paladin lvl 220</td>
+<td>Lion set is Knight-only (correctly)</td>
+</tr>
+<tr class="even">
+<td>Paladin lvl 250</td>
+<td>No Paladin gear at level 250 tier</td>
+</tr>
+<tr class="odd">
+<td>Paladin armor lvl 350</td>
+<td>Paladin only has Alicorn Ring at 350</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="files-to-modify" class="level2">
+<h2 class="anchored" data-anchor-id="files-to-modify">Files to Modify</h2>
+<ol type="1">
+<li><strong><code>~/repos/demonax-data/game/dat/objects.srv</code></strong> - Game data file</li>
+<li><strong><code>asset/demonax-test.sqlite</code></strong> - Website database</li>
+</ol>
+</section>
+<section id="objects.srv-format-reference" class="level2">
+<h2 class="anchored" data-anchor-id="objects.srv-format-reference">objects.srv Format Reference</h2>
+<pre><code>TypeID      = XXXX
+Name        = "item name"
+Flags       = {Flag1,Flag2,Flag3}
+Attributes  = {Key1=Value1,Key2=Value2}</code></pre>
+<p><strong>Critical formatting rules:</strong> - Each item is exactly 4 lines (TypeID, Name, Flags, Attributes) - Blank line between items - No trailing spaces - Attributes are comma-separated key=value pairs inside braces - When adding SkillBoost, must add <code>SkillBoost</code> to Flags AND <code>SkillNumber</code> + <code>SkillModification</code> to Attributes</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

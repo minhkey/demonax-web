@@ -16,7 +16,7 @@ library(RSQLite)
 library(dplyr)
 
 # Connect to database
-con <- DBI::dbConnect(RSQLite::SQLite(), "../../asset/demonax-test.sqlite")
+con <- DBI::dbConnect(RSQLite::SQLite(), "asset/demonax-test.sqlite")
 
 spells <- dbReadTable(con, "spells")
 spell_teachers <- dbReadTable(con, "spell_teachers")
@@ -60,13 +60,16 @@ instant_spells <- spells |>
     Name = name,
     Words = sub("^(\\S+) (\\S+)", "\\1\\2", words),
     Level = level,
-    `Magic level` = ifelse(is.na(magic_level), 0, magic_level),
     Mana = mana,
     `Soul points` = soul_points,
     Teachers = ifelse(is.na(teachers), "", teachers)
   ) |>
-  select(Name, Words, Level, `Magic level`, Mana, `Soul points`, Teachers) |>
+  select(Name, Words, Level, Mana, `Soul points`, Teachers) |>
   arrange(Level, Name)
+
+instant_spells[instant_spells$Name == "Berserk", "Mana"] <- "Level x 4"
+instant_spells[instant_spells$Name == "Focus Strike", "Mana"] <- "Level x 2"
+instant_spells[instant_spells$Name == "Quick Strike", "Mana"] <- "Level x 1"
 
 DT::datatable(instant_spells,
           options = list(
