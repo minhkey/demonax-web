@@ -2,9 +2,7 @@
 DEV/
 
 # assets etc
-asset/img/
 qmd/library/_site/
-scripts/
 
 # Quarto build artifacts
 _freeze/
